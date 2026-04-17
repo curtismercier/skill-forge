@@ -1,0 +1,101 @@
+# Production vLLM Configuration
+# File: configs/production-config.yaml
+
+# Production Settings
+production:
+  enabled: true
+  environment: "production"
+
+# Model Configuration
+model:
+  id: "google/gemma-4-26B-A4B-it"
+  fallback_id: "MiniMaxAI/MiniMax-M2.7"
+
+# GPU Configuration
+gpu:
+  primary: "H200"
+  fallback: "A100-80GB"
+  memory_utilization: 0.95
+  allow_fallback: true
+
+# Scaling Configuration
+scaling:
+  min_replicas: 1
+  max_replicas: 4
+  target_concurrent_requests: 10
+  scale_up_cooldown: 300
+  scale_down_cooldown: 600
+
+# vLLM Configuration
+vllm:
+  dtype: "half"
+  enforce_eager: false
+  max_model_len: 8192
+  enable_chunked_prefill: true
+  max_num_batched_tokens: 32768
+  max_num_seqs: 256
+
+# Security Configuration
+security:
+  api_key_required: true
+  rate_limit_per_minute: 100
+  max_tokens_per_request: 8192
+  allowed_ips: []  # Empty = all IPs
+  cors_enabled: true
+  cors_origins: ["https://your-domain.com"]
+
+# Cost Management
+cost_management:
+  budget_limit_usd_per_hour: 10.0
+  alert_threshold_percent: 80
+  auto_scale_down_enabled: true
+  spot_instances_enabled: false
+
+# Monitoring
+monitoring:
+  enable_metrics: true
+  metrics_port: 9090
+  log_level: "INFO"
+  log_requests: true
+  log_responses: false
+
+# Health Checks
+health:
+  enabled: true
+  endpoint: "/health"
+  timeout_seconds: 5
+  interval_seconds: 30
+
+# Caching
+caching:
+  volume_name: "vllm-model-cache-prod"
+  cache_enabled: true
+  cache_ttl_hours: 168  # 1 week
+
+# Secrets (reference names, actual values in Modal dashboard)
+secrets:
+  - name: "huggingface-secret"
+  - name: "api-auth-key"
+  - name: "monitoring-webhook"
+
+# Resource Limits
+resources:
+  memory: "512GB"
+  timeout: 3600
+
+# Modal Function Configuration
+# NOTE: Modal v1 renamed container_idle_timeout → scaledown_window.
+modal:
+  scaledown_window: 600  # keep replicas warm for 10 min after last request
+
+# Retry Policy
+retry:
+  max_attempts: 3
+  backoff_multiplier: 2
+  max_backoff_seconds: 60
+
+# Deployment
+deployment:
+  region: "us-east"
+  availability_zones: ["use1-az1", "use1-az2"]
+  health_check_grace_period: 120

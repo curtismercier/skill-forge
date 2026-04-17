@@ -1,0 +1,103 @@
+# {{NAME}}
+
+<!--
+  This is the CLAUDE.md for the {{NAME}} skill. Auto-loaded by Claude Code at
+  every session when working in this directory. Commit to git.
+
+  Rules for editing THIS file:
+  - Keep under 200 lines. Anthropic's guidance: longer files eat context and
+    instruction adherence drops.
+  - Imperative voice. "Run tests" not "tests should be run".
+  - Durable truths only. "Last session we fixed X" does not belong here —
+    that's handoff.md territory. "This project uses Y" does.
+  - When a rule here stops being true, update this file. When it's temporarily
+    violated, log it in ERRATA.md instead of silently rewriting.
+-->
+
+## What this skill is
+
+{{DOMAIN}}
+
+## Conventions
+
+- **Stdlib-only Python.** No pip dependencies. Every script must run with a
+  bare `python3` and nothing else installed.
+- **Source-first research.** Before writing code against any external API,
+  run `scripts/gh_research.py` against the canonical repo. Training-data
+  APIs lie; the repo at HEAD is ground truth.
+- **Progressive disclosure.** SKILL.md routes; docs/ explains; references/
+  cites with dates. Don't tutorial inside SKILL.md.
+- **ERRATA before silent rewrites.** When a documented fact drifts, add an
+  `active` entry to ERRATA.md with the correct value, then absorb into the
+  main docs once stable. Never silently correct — preserves drift history.
+
+## Before committing
+
+Run all three audits. All must exit 0 or 1 (flags = blocked, warnings = review):
+
+```bash
+python3 scripts/validate_skill.py .
+python3 scripts/security_scan.py .
+python3 scripts/audit_skill.py .
+```
+
+For skills with metadata.dependencies or metadata.schema_expectations
+frontmatter, also spot-check:
+
+```bash
+python3 scripts/staleness_check.py . --check-deps --check-drift
+```
+
+## Where things live
+
+- `SKILL.md` — the entry point Claude reads. Short. Routes to docs.
+- `docs/` — explanatory content. Loaded on demand.
+  - `docs/00-verification-playbook.md` — how the next agent audits claims.
+- `references/` — sourced facts with "Last verified" dates.
+- `scripts/` — runnable tools the agent uses during a session.
+- `examples/` — user-facing code samples.
+- `ERRATA.md` — drift log. `active → absorbed → outdated`.
+
+## When you find drift
+
+1. Add an `active` entry to ERRATA.md with location, drift, correct value,
+   and a specific verification command.
+2. Leave the main docs alone for now.
+3. After a week of stability or one successful use of the correction, fold
+   it into the docs and flip the ERRATA entry to `absorbed`.
+4. If the underlying thing changes again, mark `outdated` and add a new
+   `active` entry above.
+
+Rationale: silent edits lose the "why did we change this" history. Six months
+from now, the next agent can't tell if a "correction" was right or was itself
+a hallucination.
+
+## Canonical sources for this skill
+
+<!--
+  List the external repos and doc URLs this skill's claims are derived from.
+  Example:
+  - `owner/repo` — the SDK whose API we document
+  - https://example.com/docs — the pricing page we cite
+-->
+
+## Known non-goals
+
+<!--
+  What this skill deliberately does NOT do. Prevents scope creep.
+  Example:
+  - We don't wrap every endpoint in the API — only the ones relevant to X.
+  - We don't ship client libraries — this is documentation, not a package.
+-->
+
+## Quick reference
+
+<!--
+  The three most common things someone will want to do with this skill.
+  Commands, not prose.
+
+  Example:
+  - Scaffold a new something: `python3 scripts/foo.py --name X`
+  - Audit before shipping: `python3 scripts/audit.py .`
+  - Check for drift: `python3 scripts/staleness.py . --check-drift`
+-->

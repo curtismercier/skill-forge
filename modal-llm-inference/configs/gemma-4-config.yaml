@@ -1,0 +1,99 @@
+# Gemma 4 vLLM Configuration
+# File: configs/gemma-4-config.yaml
+
+# Model Configuration
+model:
+  id: "google/gemma-4-26B-A4B-it"
+  type: "dense"
+  architecture: "decoder-only"
+
+# Model Specifications
+specifications:
+  total_parameters: "26B"
+  active_parameters: "4B per token"
+  context_length: 8192
+  max_position_embeddings: 32768
+  multimodal: true
+
+# GPU Configuration
+gpu:
+  type: "H200"  # Required: 141 GB VRAM
+  fallback: "A100-80GB"
+  memory_utilization: 0.95
+  tensor_parallel_size: 1
+
+# vLLM Configuration
+vllm:
+  # Precision
+  dtype: "half"  # float16
+  enforce_eager: false  # Enable CUDA graphs
+
+  # Context and Memory
+  max_model_len: 8192
+  max_seq_len_to_capture: 8192
+
+  # Attention
+  enable_prefix_caching: true
+  enable_chunked_prefill: true
+  prefill_chunk_size: 4096
+
+  # Batching
+  max_num_batched_tokens: 32768
+  max_num_seqs: 256
+  batch_scheduler_policy: "mandatory"
+
+  # KV Cache
+  block_size: 16
+  num_gpu_blocks_override: null
+
+  # Sampling (defaults, can be overridden per request)
+  defaultSamplingParams:
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 50
+    max_tokens: 1024
+
+# Server Configuration
+server:
+  host: "0.0.0.0"
+  port: 8000
+  uvicorn_workers: 1
+  allowed_origins: ["*"]
+  cors_allow_origins: []
+
+# Performance Tuning
+performance:
+  # Compilation (improves throughput, increases cold start)
+  compilation_config: 1  # 0=disabled, 1=inductor, 2+ experimental
+
+  # Worker configuration
+  trust_remote_code: true
+  download_dir: null  # Use HF default
+
+# Environment Variables
+environment:
+  HF_HOME: "/root/.cache/huggingface"
+  TRANSFORMERS_CACHE: "/root/.cache/huggingface/transformers"
+  VLLM_WORKER_MULTIPROC_METHOD: "spawn"
+
+# Resource Limits
+resources:
+  memory: "512GB"
+  timeout: 3600  # 1 hour
+
+# Modal Function Configuration
+# NOTE: In Modal's v1 API, `container_idle_timeout` was renamed to `scaledown_window`.
+modal:
+  scaledown_window: 900  # seconds; was container_idle_timeout (5 min → 15 min default)
+  concurrent_max_inputs: 32
+
+# Caching
+caching:
+  volume_name: "vllm-model-cache"
+  cache_models: true
+  cache_jit_artifacts: true
+
+# Secrets Required
+secrets:
+  - name: "huggingface-secret"
+    description: "HuggingFace API token for model access"

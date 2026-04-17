@@ -1,0 +1,89 @@
+# MiniMax-M2.7 vLLM Configuration
+# File: configs/minimax-2.7-config.yaml
+#
+# Reference values for MiniMax-M2.7 on Modal+vLLM.
+# This is a large MoE model (229B total / 10B active, FP8 native) and
+# requires tensor parallelism across multiple GPUs. See minimax_server.py
+# for a runnable deployment using these values.
+
+# Model Configuration
+model:
+  id: "MiniMaxAI/MiniMax-M2.7"
+  architecture: "MoE (229B total / 10B active)"
+  format: "FP8 native"
+  trust_remote_code: true  # MiniMax ships custom code
+
+# Model Specifications
+specifications:
+  total_parameters: "229B"
+  active_parameters: "10B per token"
+  context_length: 32768          # up to 200k supported; tune to workload
+  multimodal: false
+
+# GPU Configuration
+# NOTE: MiniMax-M2.7 does NOT fit on a single GPU, even an H200.
+# 2xH200 or 4xH100 is the floor. Single A100-80GB is NOT an option.
+gpu:
+  type: "H200"
+  count: 2                       # maps to --tensor-parallel-size
+  fallback_type: "H100"
+  fallback_count: 4
+  memory_utilization: 0.90
+  tensor_parallel_size: 2        # must equal `count`
+
+# vLLM Configuration
+vllm:
+  # Precision: use native FP8 where hardware supports it (Hopper/Blackwell)
+  dtype: "auto"
+  enforce_eager: true            # toggle to false once warm; trades boot for throughput
+
+  # Context and Memory
+  max_model_len: 32768
+
+  # Attention
+  enable_prefix_caching: true
+  enable_chunked_prefill: true
+
+  # Batching
+  max_num_batched_tokens: 32768
+  max_num_seqs: 128              # smaller than Gemma — bigger model, less slack
+
+  # Sampling defaults recommended by the model card
+  defaultSamplingParams:
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 40
+    max_tokens: 1024
+
+# Server Configuration
+server:
+  host: "0.0.0.0"
+  port: 8000
+  served_model_name: "llm"       # what clients pass as `model=`
+
+# Modal Function Configuration
+# NOTE: In Modal's v1 API, `container_idle_timeout` was renamed to `scaledown_window`.
+modal:
+  scaledown_window: 900          # seconds; was container_idle_timeout
+  timeout: 900                   # container startup budget
+  concurrent_max_inputs: 16      # per replica
+
+# Environment Variables
+environment:
+  HF_HUB_ENABLE_HF_TRANSFER: "1"
+  VLLM_USE_V1: "1"
+  NCCL_CUMEM_ENABLE: "1"
+
+# Caching (Modal Volumes)
+volumes:
+  huggingface_cache:
+    mount: "/root/.cache/huggingface"
+    volume_name: "huggingface-cache"
+  vllm_cache:
+    mount: "/root/.cache/vllm"
+    volume_name: "vllm-cache"
+
+# Secrets Required
+secrets:
+  - name: "huggingface-secret"
+    description: "HuggingFace API token with MiniMax-M2.7 access accepted"

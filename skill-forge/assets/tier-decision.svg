@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 460" role="img" aria-labelledby="title desc">
+  <title id="title">skill-forge tier decision tree</title>
+  <desc id="desc">A branching diagram showing which complexity tier to pick for a new skill, based on whether the skill touches external APIs, needs runnable scripts, or faces rapidly-evolving upstream.</desc>
+
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M1 1 L9 5 L1 9 Z" fill="#73726c"/>
+    </marker>
+  </defs>
+
+  <style>
+    .q { fill: #F1EFE8; stroke: #73726c; stroke-width: 1; }
+    .t1 { fill: #EAF3DE; stroke: #3B6D11; }
+    .t2 { fill: #E6F1FB; stroke: #185FA5; }
+    .t3 { fill: #EEEDFE; stroke: #534AB7; }
+    .line { stroke: #888780; stroke-width: 1.5; fill: none; }
+    .title-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 15px; font-weight: 600; fill: #2C2C2A; }
+    .q-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; font-weight: 600; fill: #3d3d3a; }
+    .tier-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; font-weight: 700; fill: #2C2C2A; }
+    .detail-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; fill: #5F5E5A; }
+    .branch-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 600; fill: #5F5E5A; }
+    .cmd-text { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10px; fill: #534AB7; }
+    @media (prefers-color-scheme: dark) {
+      .q { fill: #26215C; stroke: #AFA9EC; }
+      .t1 { fill: #27500A; stroke: #97C459; }
+      .t2 { fill: #0C447C; stroke: #85B7EB; }
+      .t3 { fill: #3C3489; stroke: #AFA9EC; }
+      .line { stroke: #B4B2A9; }
+      .title-text, .tier-text { fill: #EEEDFE; }
+      .q-text { fill: #CECBF6; }
+      .detail-text, .branch-text { fill: #D3D1C7; }
+      .cmd-text { fill: #CECBF6; }
+    }
+  </style>
+
+  <text x="430" y="30" text-anchor="middle" class="title-text">Which tier should your skill be?</text>
+
+  <!-- Q1: External APIs? -->
+  <g>
+    <rect class="q" x="310" y="65" width="240" height="60" rx="8"/>
+    <text x="430" y="90" text-anchor="middle" class="q-text">Does the skill touch</text>
+    <text x="430" y="108" text-anchor="middle" class="q-text">external APIs or evolving SDKs?</text>
+  </g>
+
+  <!-- Branches from Q1 -->
+  <path class="line" d="M430 125 L430 150 L150 150 L150 180" marker-end="url(#arr)"/>
+  <path class="line" d="M430 125 L430 150 L430 180" marker-end="url(#arr)"/>
+  <text x="285" y="145" class="branch-text">No</text>
+  <text x="440" y="145" class="branch-text">Yes</text>
+
+  <!-- Tier 1 (left: No external APIs) -->
+  <g>
+    <rect class="t1" x="50" y="180" width="200" height="150" rx="10"/>
+    <text x="150" y="208" text-anchor="middle" class="tier-text">Tier 1</text>
+    <text x="150" y="228" text-anchor="middle" class="detail-text">single SKILL.md</text>
+    <text x="150" y="246" text-anchor="middle" class="detail-text">50–200 lines</text>
+    <text x="150" y="274" text-anchor="middle" class="detail-text">Writing patterns, prompt tricks,</text>
+    <text x="150" y="290" text-anchor="middle" class="detail-text">stable helpers, style guides</text>
+    <text x="150" y="318" text-anchor="middle" class="cmd-text">new_skill.py --tier 1</text>
+  </g>
+
+  <!-- Q2: Does upstream change often? (for "yes" branch from Q1) -->
+  <g>
+    <rect class="q" x="310" y="180" width="240" height="60" rx="8"/>
+    <text x="430" y="205" text-anchor="middle" class="q-text">Does upstream change often</text>
+    <text x="430" y="223" text-anchor="middle" class="q-text">(monthly or faster)?</text>
+  </g>
+
+  <!-- Branches from Q2 -->
+  <path class="line" d="M430 240 L430 265 L390 265 L390 295" marker-end="url(#arr)"/>
+  <path class="line" d="M430 240 L430 265 L710 265 L710 295" marker-end="url(#arr)"/>
+  <text x="360" y="260" class="branch-text">No</text>
+  <text x="725" y="260" class="branch-text">Yes</text>
+
+  <!-- Tier 2 (middle) -->
+  <g>
+    <rect class="t2" x="290" y="295" width="200" height="150" rx="10"/>
+    <text x="390" y="323" text-anchor="middle" class="tier-text">Tier 2</text>
+    <text x="390" y="343" text-anchor="middle" class="detail-text">+ scripts/ + references/</text>
+    <text x="390" y="361" text-anchor="middle" class="detail-text">5–15 files</text>
+    <text x="390" y="389" text-anchor="middle" class="detail-text">CLI wrappers, API helpers,</text>
+    <text x="390" y="405" text-anchor="middle" class="detail-text">anything needing verified facts</text>
+    <text x="390" y="433" text-anchor="middle" class="cmd-text">new_skill.py --tier 2</text>
+  </g>
+
+  <!-- Tier 3 (right) -->
+  <g>
+    <rect class="t3" x="610" y="295" width="200" height="150" rx="10"/>
+    <text x="710" y="323" text-anchor="middle" class="tier-text">Tier 3</text>
+    <text x="710" y="343" text-anchor="middle" class="detail-text">+ docs/ + ERRATA.md</text>
+    <text x="710" y="361" text-anchor="middle" class="detail-text">+ CLAUDE.md + playbook</text>
+    <text x="710" y="379" text-anchor="middle" class="detail-text">20–80+ files</text>
+    <text x="710" y="407" text-anchor="middle" class="detail-text">Full systems, rapidly-evolving</text>
+    <text x="710" y="423" text-anchor="middle" class="detail-text">upstream, drift-heavy domains</text>
+    <text x="710" y="443" text-anchor="middle" class="cmd-text">new_skill.py --tier 3</text>
+  </g>
+</svg>

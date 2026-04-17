@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 420" role="img" aria-labelledby="title desc">
+  <title id="title">skill-forge workflow: request → classified → researched → scaffolded → audited → shipped</title>
+  <desc id="desc">A horizontal pipeline showing the six stages skill-forge runs when producing a skill, with the relevant tool named under each stage.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M1 1 L9 5 L1 9 Z" fill="#73726c"/>
+    </marker>
+  </defs>
+
+  <style>
+    .stage-box { fill: #F1EFE8; stroke: #73726c; stroke-width: 1; rx: 8; }
+    .stage-active { fill: #EEEDFE; stroke: #534AB7; }
+    .stage-audit { fill: #E1F5EE; stroke: #0F6E56; }
+    .stage-ship { fill: #FAEEDA; stroke: #854F0B; }
+    .connector { stroke: #888780; stroke-width: 1.5; fill: none; }
+    .title-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; font-weight: 600; fill: #2C2C2A; }
+    .stage-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; font-weight: 600; fill: #3d3d3a; }
+    .tool-text { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10px; fill: #534AB7; }
+    .detail-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; fill: #5F5E5A; }
+    .caption-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 12px; font-style: italic; fill: #5F5E5A; }
+    @media (prefers-color-scheme: dark) {
+      .stage-box { fill: #26215C; stroke: #7F77DD; }
+      .stage-active { fill: #3C3489; stroke: #AFA9EC; }
+      .stage-audit { fill: #085041; stroke: #5DCAA5; }
+      .stage-ship { fill: #633806; stroke: #FAC775; }
+      .connector { stroke: #B4B2A9; }
+      .title-text { fill: #EEEDFE; }
+      .stage-text { fill: #CECBF6; }
+      .tool-text { fill: #AFA9EC; }
+      .detail-text { fill: #D3D1C7; }
+      .caption-text { fill: #B4B2A9; }
+    }
+  </style>
+
+  <!-- Title -->
+  <text x="430" y="32" text-anchor="middle" class="title-text">From "build me a skill" to shippable .skill archive</text>
+
+  <!-- Stage 1: Classify -->
+  <g>
+    <rect class="stage-box stage-active" x="20" y="80" width="130" height="90" rx="8"/>
+    <text x="85" y="105" text-anchor="middle" class="stage-text">1. Classify</text>
+    <text x="85" y="128" text-anchor="middle" class="detail-text">tier 1, 2, or 3</text>
+    <text x="85" y="144" text-anchor="middle" class="detail-text">based on scope</text>
+    <text x="85" y="160" text-anchor="middle" class="tool-text">docs/02-planning.md</text>
+  </g>
+
+  <!-- Stage 2: Research -->
+  <g>
+    <rect class="stage-box stage-active" x="170" y="80" width="130" height="90" rx="8"/>
+    <text x="235" y="105" text-anchor="middle" class="stage-text">2. Research</text>
+    <text x="235" y="128" text-anchor="middle" class="detail-text">canonical repos,</text>
+    <text x="235" y="144" text-anchor="middle" class="detail-text">verified APIs</text>
+    <text x="235" y="160" text-anchor="middle" class="tool-text">gh_research.py</text>
+  </g>
+
+  <!-- Stage 3: Scaffold -->
+  <g>
+    <rect class="stage-box stage-active" x="320" y="80" width="130" height="90" rx="8"/>
+    <text x="385" y="105" text-anchor="middle" class="stage-text">3. Scaffold</text>
+    <text x="385" y="128" text-anchor="middle" class="detail-text">tier-appropriate</text>
+    <text x="385" y="144" text-anchor="middle" class="detail-text">directory + files</text>
+    <text x="385" y="160" text-anchor="middle" class="tool-text">new_skill.py</text>
+  </g>
+
+  <!-- Stage 4: Audit -->
+  <g>
+    <rect class="stage-box stage-audit" x="470" y="80" width="130" height="90" rx="8"/>
+    <text x="535" y="105" text-anchor="middle" class="stage-text">4. Audit</text>
+    <text x="535" y="128" text-anchor="middle" class="detail-text">3 independent</text>
+    <text x="535" y="144" text-anchor="middle" class="detail-text">passes</text>
+    <text x="535" y="160" text-anchor="middle" class="tool-text">audit + security + validate</text>
+  </g>
+
+  <!-- Stage 5: Maintain -->
+  <g>
+    <rect class="stage-box stage-audit" x="620" y="80" width="130" height="90" rx="8"/>
+    <text x="685" y="105" text-anchor="middle" class="stage-text">5. Maintain</text>
+    <text x="685" y="128" text-anchor="middle" class="detail-text">content drift,</text>
+    <text x="685" y="144" text-anchor="middle" class="detail-text">schema drift</text>
+    <text x="685" y="160" text-anchor="middle" class="tool-text">staleness_check.py</text>
+  </g>
+
+  <!-- Arrows between stages -->
+  <path class="connector" d="M150 125 L170 125" marker-end="url(#arrow)"/>
+  <path class="connector" d="M300 125 L320 125" marker-end="url(#arrow)"/>
+  <path class="connector" d="M450 125 L470 125" marker-end="url(#arrow)"/>
+  <path class="connector" d="M600 125 L620 125" marker-end="url(#arrow)"/>
+
+  <!-- Output: shippable skill -->
+  <g>
+    <rect class="stage-box stage-ship" x="295" y="240" width="270" height="80" rx="10"/>
+    <text x="430" y="266" text-anchor="middle" class="title-text">Shippable .skill archive</text>
+    <text x="430" y="286" text-anchor="middle" class="detail-text">installable via gh skill, git clone, or upload</text>
+    <text x="430" y="304" text-anchor="middle" class="tool-text">package_skill.py</text>
+  </g>
+
+  <!-- Arrow from pipeline down to output -->
+  <path class="connector" d="M430 175 L430 220 L430 240" marker-end="url(#arrow)"/>
+
+  <!-- Feedback loop arrow: maintain back to research (shown as dashed curve) -->
+  <path class="connector" stroke-dasharray="4 3" d="M685 80 Q 685 55 670 50 L 255 50 Q 235 50 235 75" marker-end="url(#arrow)"/>
+  <text x="460" y="44" text-anchor="middle" class="caption-text">when drift detected → re-research the changed upstream</text>
+
+  <!-- Footer caption -->
+  <text x="430" y="370" text-anchor="middle" class="caption-text">Every stage has an exit-code contract (0 clean · 1 warnings · 2 blockers). Every tool is stdlib-only Python.</text>
+  <text x="430" y="392" text-anchor="middle" class="caption-text">Skills evolve. skill-forge's ERRATA lifecycle makes drift legible before it becomes wrong-looking documentation.</text>
+</svg>
