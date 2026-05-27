@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+Brief, Informative, Friendly, Firm
 render-agreement.py — render a markdown agreement to an editable HTML preview.
 
 Usage:
@@ -8,7 +9,7 @@ Usage:
     python3 render-agreement.py path/to/agreement.md --output out.html  # custom path
 
 Features:
-    - Professional contract typography (Georgia serif, print-friendly)
+    - Professional contract typography (Times New Roman 12pt, print-friendly)
     - Inline editing via contenteditable on each section
     - Save button → downloads edited content as markdown
     - Print/PDF button → browser's native print-to-PDF
@@ -26,7 +27,7 @@ from datetime import datetime
 from pathlib import Path
 
 
-def parse_markdown_sections(text: str) -> list[dict]:
+def parse_markdown_sections(text: str) -> tuple:
     """Split markdown into editable sections by heading level."""
     lines = text.split('\n')
     sections = []
@@ -73,18 +74,14 @@ def render_markdown_to_html(markdown_text: str) -> str:
     text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
 
     # Tables
-    table_lines = []
     lines = text.split('\n')
     result = []
     i = 0
-    in_table = False
     while i < len(lines):
         line = lines[i]
         # Detect table: line with | and at least one --- row after
         if '|' in line and i + 1 < len(lines) and '---' in lines[i + 1]:
             headers = [h.strip() for h in line.split('|') if h.strip()]
-            divider = lines[i + 1]
-            # Read data rows
             table_html = '<table>\n<thead>\n<tr>'
             for h in headers:
                 table_html += f'<th>{html_module.escape(h)}</th>'
@@ -99,14 +96,9 @@ def render_markdown_to_html(markdown_text: str) -> str:
                 i += 1
             table_html += '</tbody>\n</table>'
             result.append(table_html)
-            in_table = False
-        elif '|' in line and in_table:
-            cells = [c.strip() for c in line.split('|') if c.strip()]
-            table_html = '<tr>'
-            for c in cells:
-                table_html += f'<td>{html_module.escape(c)}</td>'
-            table_html += '</tr>\n'
-            result.append(table_html)
+        elif '|' in line:
+            # Could be a stray pipe line or simple inline table
+            result.append(line)
             i += 1
         else:
             # Horizontal rule
@@ -121,13 +113,11 @@ def render_markdown_to_html(markdown_text: str) -> str:
     text = '\n'.join(result)
 
     # Lists (simple unordered)
-    list_lines = []
     result = []
     in_list = False
     for line in text.split('\n'):
         list_match = re.match(r'^(\s*)[-*+]\s+(.+)$', line)
         if list_match:
-            indent = list_match.group(1)
             content = list_match.group(2)
             if not in_list:
                 result.append('<ul>')
@@ -144,17 +134,6 @@ def render_markdown_to_html(markdown_text: str) -> str:
     return '\n'.join(result)
 
 
-def markdown_to_plain_text(markdown_text: str) -> str:
-    """Strip markdown formatting for text content extraction."""
-    text = re.sub(r'\*\*(.+?)\*\*', r'\1', markdown_text)
-    text = re.sub(r'\*(.+?)\*', r'\1', text)
-    text = re.sub(r'^#+\s+', '', text, flags=re.MULTILINE)
-    text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE)
-    text = re.sub(r'\|', ' ', text)
-    text = re.sub(r'^-{3,}$', '', text, flags=re.MULTILINE)
-    return text.strip()
-
-
 def serialize_section(content_lines: list[str]) -> str:
     """Join content lines and render applicable markdown to HTML."""
     raw = '\n'.join(content_lines)
@@ -163,11 +142,6 @@ def serialize_section(content_lines: list[str]) -> str:
 
 def generate_html(sections: list[dict], doc_title: str, source_path: str) -> str:
     """Generate a standalone editable HTML document."""
-    disclaimer = (
-        '⚠️ DISCLAIMER: This is a template for reference purposes only. '
-        'Have it reviewed by a qualified Ontario-licensed attorney before signing.'
-    )
-
     # Build body content
     body_html = '<div class="contract" id="contract-document">\n'
 
@@ -201,13 +175,13 @@ def generate_html(sections: list[dict], doc_title: str, source_path: str) -> str
     body_html += '<div class="signature-section">\n'
     body_html += '<hr>\n'
     body_html += '<div class="signature-block">\n'
-    body_html += '  <p><strong>[PARTY A — NAME AND ROLE]</strong></p>\n'
+    body_html += '  <p><strong>[PARTY A \u2014 NAME AND ROLE]</strong></p>\n'
     body_html += '  <div class="sig-line"><span>Signature:</span> <span class="sig-space">________________________</span></div>\n'
     body_html += '  <div class="sig-line"><span>Name:</span> <span class="sig-space">________________________</span></div>\n'
     body_html += '  <div class="sig-line"><span>Date:</span> <span class="sig-space">________________________</span></div>\n'
     body_html += '</div>\n'
     body_html += '<div class="signature-block">\n'
-    body_html += '  <p><strong>[PARTY B — NAME AND ROLE]</strong></p>\n'
+    body_html += '  <p><strong>[PARTY B \u2014 NAME AND ROLE]</strong></p>\n'
     body_html += '  <div class="sig-line"><span>Signature:</span> <span class="sig-space">________________________</span></div>\n'
     body_html += '  <div class="sig-line"><span>Name:</span> <span class="sig-space">________________________</span></div>\n'
     body_html += '  <div class="sig-line"><span>Date:</span> <span class="sig-space">________________________</span></div>\n'
@@ -222,9 +196,9 @@ def generate_html(sections: list[dict], doc_title: str, source_path: str) -> str
   <span class="toolbar-title">Contract Editor</span>
   <span class="toolbar-spacer"></span>
   <span class="toolbar-status" id="status-msg">Ready</span>
-  <button class="btn btn-save" onclick="saveDocument()">💾 Save</button>
-  <button class="btn btn-print" onclick="window.print()">🖨️ Print / PDF</button>
-  <button class="btn btn-reset" onclick="resetEdits()">↩️ Reset</button>
+  <button class="btn btn-save" onclick="saveDocument()">\U0001f4be Save</button>
+  <button class="btn btn-print" onclick="window.print()">\U0001f5a8\ufe0f Print / PDF</button>
+  <button class="btn btn-reset" onclick="resetEdits()">\u21a9\ufe0f Reset</button>
 </div>
 '''
 
@@ -325,7 +299,7 @@ function saveDocument() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  statusEl.textContent = '✅ Saved as ' + filename;
+  statusEl.textContent = '\u2705 Saved as ' + filename;
   setTimeout(() => { statusEl.textContent = 'Ready'; }, 3000);
 }
 
@@ -457,7 +431,7 @@ function resetEdits() {
     width: 100%;
     border-collapse: collapse;
     margin: 12px 0;
-    font-size: 13px;
+    font-size: 12pt;
   }
 
   .section-content th, .section-content td {
@@ -501,7 +475,7 @@ function resetEdits() {
     display: flex;
     align-items: center;
     margin: 10px 0;
-    font-size: 14px;
+    font-size: 12pt;
   }
 
   .sig-line span:first-child {
@@ -577,14 +551,14 @@ def main():
     output_path = args.output or input_path.with_suffix(".html")
     output_path.write_text(html, encoding="utf-8")
 
-    print(f"✅ Rendered: {output_path}")
-    print(f"   File size: {output_path.stat().st_size:,} bytes")
-    print(f"   Sections: {len([s for s in sections if s['type'] == 'heading'])}")
+    print(f"Rendered: {output_path}")
+    print(f"  File size: {output_path.stat().st_size:,} bytes")
+    print(f"  Sections: {len([s for s in sections if s['type'] == 'heading'])}")
 
     if args.open:
         import webbrowser
         webbrowser.open(str(output_path.resolve()))
-        print("   Opened in browser")
+        print("  Opened in browser")
 
 
 if __name__ == "__main__":

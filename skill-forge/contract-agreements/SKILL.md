@@ -182,6 +182,15 @@ Last audited: 2026-05-27. When using this skill after a long gap, check:
 - Is the legal-review disclaimer still appropriate for Ontario?
 - Does `scripts/render-agreement.py` still work with current Python? (spot-check)
 
+## Pre-push checklist
+
+Before pushing skill changes to a public repo:
+
+- [ ] `grep -in "client\|company\|personal\|name\|specific" scripts/*.py references/*.md` — catch any hardcoded personal info
+- [ ] Check signature blocks for real names vs. placeholders
+- [ ] `git diff --cached` — review every line for PII before committing
+- [ ] If PII snuck in: `git reset --soft HEAD~N` + recommit (don't leave it in history)
+
 ## Anti-patterns
 
 - **Don't include payment terms without also including a late-payment / interest clause** (Ontario's Courts of Justice Act s.128 sets the default rate)
