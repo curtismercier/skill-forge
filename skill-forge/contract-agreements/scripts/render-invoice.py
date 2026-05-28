@@ -282,23 +282,19 @@ def main():
     print(f"  Items: {len(data.get('items', []))}")
 
     if args.pdf and args.input:
-        import subprocess, shutil
+        import subprocess
         pdf_path = output_path.with_suffix('.pdf')
         script_dir = Path(__file__).parent
-        css_path = script_dir / 'pdf-contract.css'
+        html_input = output_path  # use the compiled HTML, not the markdown
         cmd = [
-            'md-to-pdf',
-            '--stylesheet', str(css_path),
-            '--pdf-options', '{"format":"Letter","margin":"0.7in 0.6in"}',
-            str(input_path),
+            'node', str(script_dir / 'html-to-pdf.mjs'),
+            str(html_input),
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
-            src_pdf = input_path.with_suffix('.pdf')
-            if src_pdf.exists():
-                shutil.move(str(src_pdf), str(pdf_path))
-            print(f"  PDF:    {pdf_path}")
-            print(f"  PDF size: {pdf_path.stat().st_size:,} bytes")
+            if pdf_path.exists():
+                print(f"  PDF:    {pdf_path}")
+                print(f"  PDF size: {pdf_path.stat().st_size:,} bytes")
         else:
             print(f"  PDF generation failed: {result.stderr.strip()}", file=sys.stderr)
 
