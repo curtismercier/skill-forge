@@ -54,34 +54,40 @@ Every document (agreements/contracts) follows this structure:
 ⚠️ DISCLAIMER: This is a template for reference purposes only. Have it reviewed
 by a qualified Ontario-licensed attorney before signing.
 
-# [DOCUMENT TYPE]
+# [DOCUMENT TYPE — ALL CAPS]
 
-**Date:** [Date]
-**Governing Law:** Ontario, Canada
-**Prepared by:** [Drafter name/role]
+**DRAFT — FOR REVIEW** (only if pre-signature draft)
 
-## PARTIES
+This [Document Type] (the "Agreement") is made as of ___________________, [YEAR]
+(the "Effective Date") by and between:
 
-- **[Party A Name]** ("[Short Name A]")
-- **[Party B Name]** ("[Short Name B]")
+**[Party A Name]**, [description / carrying on business as] ("[Short Name A]")
 
-## RECITALS (Background)
+— and —
+
+**[Party B Name]**, [description / carrying on business as] ("[Short Name B]")
+
+Each referred to as a "Party" and collectively as the "Parties."
+
+---
+
+## Recitals
 
 A. [Factual context]
 B. [Prior relationship / work performed]
 C. [Reason for this document]
 
-## TERMS
+**NOW, THEREFORE**, in consideration of the mutual promises, covenants, and releases
+contained in this Agreement, and for other good and valuable consideration, the receipt
+and sufficiency of which is hereby acknowledged, the Parties agree as follows:
 
-### 1. [Section Title]
+---
+
+## 1. [Section Title]
 
 [Terms ...]
 
-### 2. [Next Section]
-
-[Terms ...]
-
-### N. GENERAL PROVISIONS
+## N. General Provisions
 
 N.1 **Governing Law.** This agreement is governed by the laws of Ontario
     and the federal laws of Canada applicable therein.
@@ -91,18 +97,43 @@ N.4 **Counterparts.** ...
 N.5 **Independent Legal Advice.** Each Party acknowledges that they have
     had the opportunity to obtain independent legal advice.
 
-## SIGNATURES
+---
 
-**PARTY A:**
-Signature: _____________
-Name: [Printed]
-Date: _________
+## Signatures
 
-**PARTY B:**
-Signature: _____________
+**[PARTY A NAME] ([Short Name A])**
+
+Signature: _______________________________
+
 Name: [Printed]
-Date: _________
+
+Date: __________________
+
+---
+
+**[PARTY B NAME] ([Short Name B])**
+
+Signature: _______________________________
+
+Name: [Printed]
+
+Date: __________________
+
+---
+
+*DRAFT v[VERSION] — [DATE]. Prepared by [Drafter]. Not a legally binding document
+until signed by both Parties.*
 ```
+
+**Key formatting conventions:**
+- Title in ALL CAPS for legal document headings
+- Opening clause: "This Agreement is made as of [Date] by and between:"
+- Party separator: "— and —" on its own line
+- Defined terms in quotes on first use: ("Developer")
+- "Effective Date" as defined term at the top
+- "NOW, THEREFORE" closes recitals with standard consideration language
+- Section numbers use 1., 1.1, 1.2 format throughout
+- Signature blocks include full party name, signature line, printed name, date
 
 ### Settlement agreement specifics
 
@@ -110,11 +141,35 @@ Include these sections in addition to the general structure:
 
 | Section | What it covers |
 |---|---|
-| Settlement Payment | Amount, due date, payment method, timing trigger |
+| Settlement Payment | Amount, due date, payment method, timing trigger, late-payment acceleration |
 | IP Assignment | What is being transferred, effective on payment |
-| Acceptance / Verification | Review period, defect remedy process |
-| Mutual Release | Both parties release claims (subject to exceptions) |
+| Acceptance / Verification | Review period, defect remedy process, acceptance criteria |
+| Post-Delivery Support | Support period, bug-fix warranty, **access-conditional** (see pattern below) |
+| Mutual Release | Both parties release claims (subject to exceptions), known + unknown claims |
+| Confidentiality / Non-Disparagement | Terms confidentiality, no negative statements |
 | Representations | Each party's warranties (authority, ownership, etc.) |
+
+#### Access-conditional warranty pattern
+
+When the Developer provides post-delivery support or a bug-fix warranty, it is
+standard practice to condition those obligations on the Developer retaining access
+to the deliverables. Use this clause pattern:
+
+```
+The Developer's obligations under [Section X] are expressly conditional on the
+Developer retaining the following access throughout the applicable period:
+  (a) Read/write access to the GitHub repository containing the [deliverable];
+  (b) Access to the [shared account / hosting platform] set up for the project.
+
+If any of the above access rights are revoked, restricted, or otherwise made
+unavailable to the Developer at any time during the support or warranty period,
+the Developer's obligations shall immediately and automatically terminate. The
+Developer shall not be required to request or re-request access.
+```
+
+This protects against the common scenario where a client revokes access during
+the warranty period, then demands support — the developer should not be on the
+hook for issues they can't access or reproduce.
 
 ### IP Assignment Agreement specifics
 

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Documents</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a1a;
+  }
+  .sidebar {
+    width: 220px;
+    background: #1a1a2e;
+    color: #fff;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+  }
+  .sidebar h1 {
+    font-size: 15px;
+    font-weight: 700;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar .group {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.3);
+    padding: 12px 18px 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    cursor: pointer;
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    border-left: 3px solid transparent;
+    transition: all 0.12s;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .nav-item.active { background: rgba(255,255,255,0.08); color: #fff; border-left-color: #e62719; }
+  .main {
+    margin-left: 220px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .toolbar {
+    height: 48px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .toolbar .title { font-weight: 600; font-size: 14px; }
+  .toolbar .spacer { flex: 1; }
+  .toolbar .status { font-size: 12px; color: #10b981; min-width: 120px; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-left: 8px;
+  }
+  .badge.agreement { background: #fee2e2; color: #b91c1c; }
+  .badge.invoice { background: #dbeafe; color: #1e40af; }
+  .badge.email { background: #fef3c7; color: #92400e; }
+  .layout-toggle {
+    display: none;
+    margin-left: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .layout-toggle button {
+    padding: 3px 10px;
+    border: none;
+    background: #fff;
+    cursor: pointer;
+    font-size: 11px;
+    color: #6b7280;
+    transition: all 0.12s;
+  }
+  .layout-toggle button:not(:last-child) { border-right: 1px solid #e5e7eb; }
+  .layout-toggle button.active { background: #1a1a2e; color: #fff; }
+  .btn {
+    padding: 5px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.12s;
+  }
+  .btn:hover { background: #f9fafb; }
+  .btn-load { background: #5a5a7d; color: #fff; border-color: #5a5a7d; }
+  .btn-save { background: #2d7d46; color: #fff; border-color: #2d7d46; }
+  .btn-primary { background: #e62719; color: #fff; border-color: #e62719; }
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .content iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+  }
+  .agreement-wrap { margin: 0 auto; max-width: 100%; }
+  .agreement-wrap iframe {
+    height: 11in; width: 8.5in; max-width: 100%;
+    margin: 0 auto; display: block;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.08); border-radius: 2px;
+  }
+  .agreement-wrap iframe:not(:last-child) { margin-bottom: 24px; }
+  .agreement-wrap.full iframe {
+    height: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .agreement-wrap.full iframe:not(:last-child) { margin-bottom: 0; }
+  .welcome {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    font-size: 14px;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .welcome code {
+    font-size: 12px;
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  @media print {
+    .sidebar, .toolbar { display: none !important; }
+    .main { margin-left: 0; }
+    .content { padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h1>Business Documents</h1>
+  <div class="group">Documents</div>
+  <div class="nav-item active" onclick="openDoc('agreement')">📄 Agreement</div>
+  <div class="nav-item" onclick="openDoc('invoice')">💰 Invoice</div>
+  <div class="nav-item" onclick="openDoc('email')">✉️ Email</div>
+</div>
+
+<div class="main">
+  <div class="toolbar">
+    <span class="title" id="doc-title">Select a document</span>
+    <span class="badge" id="doc-badge" style="display:none;"></span>
+    <div class="layout-toggle" id="layout-toggle">
+      <button class="active" onclick="setLayout('page')">Page</button>
+      <button onclick="setLayout('full')">Full</button>
+    </div>
+    <span class="spacer"></span>
+    <span class="status" id="status-msg">Ready</span>
+    <button class="btn btn-load" onclick="document.getElementById('file-input').click()">Load</button>
+    <button class="btn btn-primary" onclick="window.print()">Print</button>
+    <input type="file" id="file-input" accept=".md,.html" onchange="loadFile(event)" style="display:none">
+  </div>
+  <div class="content" id="content-area">
+    <div class="welcome">
+      <span>Select a document from the sidebar</span>
+      <span style="font-size:12px;color:#999;">— or —</span>
+      <span style="font-size:12px;color:#999;">Place your compiled documents in:</span>
+      <code>./outbox/agreement.html</code>
+      <code>./outbox/invoice.html</code>
+      <code>./outbox/email.html</code>
+      <span style="font-size:12px;color:#999;">Then update the <code>docs</code> object in the script below.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIGURATION ──────────────────────────────────────────────
+// Update these paths to point to your compiled documents.
+// Paths are relative to this HTML file.
+const docs = {
+  agreement: { title: 'Agreement', html: './outbox/agreement.html', badge: 'Agreement', badgeClass: 'agreement' },
+  invoice:   { title: 'Invoice',   html: './outbox/invoice.html',   badge: 'Invoice',   badgeClass: 'invoice' },
+  email:     { title: 'Email',     html: './outbox/email.html',     badge: 'Email',     badgeClass: 'email' }
+};
+// ───────────────────────────────────────────────────────────────
+
+let currentType = null;
+let currentLayout = 'page';
+
+function openDoc(type) {
+  currentType = type;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.nav-item[onclick*="${type}"]`).classList.add('active');
+
+  const area = document.getElementById('content-area');
+  const doc = docs[type];
+  if (!doc) { area.innerHTML = '<div class="welcome">No document configured for: ' + type + '</div>'; return; }
+
+  document.getElementById('doc-title').textContent = doc.title;
+  const badge = document.getElementById('doc-badge');
+  badge.style.display = 'inline-block';
+  badge.textContent = doc.badge;
+  badge.className = 'badge ' + doc.badgeClass;
+
+  document.getElementById('layout-toggle').style.display = type === 'agreement' ? 'flex' : 'none';
+
+  if (type === 'agreement' && currentLayout === 'page') {
+    area.className = 'content';
+    area.innerHTML = `<div class="agreement-wrap"><iframe src="${doc.html}"></iframe></div>`;
+  } else {
+    area.className = 'content';
+    area.innerHTML = `<iframe src="${doc.html}" style="height:calc(100vh - 48px - 40px);"></iframe>`;
+  }
+  setStatus('Loaded');
+}
+
+function setLayout(mode) {
+  currentLayout = mode;
+  document.querySelectorAll('.layout-toggle button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.layout-toggle button:${mode === 'page' ? 'first' : 'last'}-child`).classList.add('active');
+  if (currentType === 'agreement') {
+    const wrap = document.querySelector('.agreement-wrap');
+    if (wrap) { wrap.classList.toggle('full', mode === 'full'); }
+  }
+}
+
+function loadFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const area = document.getElementById('content-area');
+  document.getElementById('doc-title').textContent = file.name;
+  document.getElementById('doc-badge').style.display = 'none';
+  document.getElementById('layout-toggle').style.display = 'none';
+  area.className = 'content';
+  area.innerHTML = `<iframe src="${url}" style="height:calc(100vh - 48px - 40px);"></iframe>`;
+  setStatus('Loaded: ' + file.name);
+  event.target.value = '';
+}
+
+function setStatus(msg) {
+  const el = document.getElementById('status-msg');
+  if (el) {
+    el.textContent = msg;
+    el.style.color = msg.includes('ERR') ? '#d32f2f' : '#10b981';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => openDoc('agreement'));
+</script>
+
+</body>
+</html>
