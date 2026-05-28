@@ -538,13 +538,13 @@ function escapeHtml(text) {
   .btn-reset:hover { background: #9d3a3a; }
 
   .contract {
-    max-width: 800px;
-    margin: 0 auto;
+    max-width: 8.5in;
+    margin: 20px auto;
     background: #fff;
-    padding: 60px 72px;
+    padding: 72px 80px;
     box-shadow: 0 2px 24px rgba(0,0,0,0.08);
     position: relative;
-    min-height: 1000px;
+    min-height: 11in;
   }
 
   /* Draft watermark */
@@ -659,14 +659,20 @@ function escapeHtml(text) {
     body {
       background: #fff;
       padding: 0;
+      margin: 0;
     }
     .toolbar { display: none; }
     .contract {
       box-shadow: none;
-      padding: 40px 60px;
+      padding: 96px 80px;
       max-width: 100%;
+      min-height: auto;
+      margin: 0;
     }
     .contract::before { display: none; }
+    .doc-title {
+      margin-bottom: 36px;
+    }
     .section-content:focus { background: transparent; box-shadow: none; }
     .section-content:hover { background: transparent; }
     .section-content { outline: none; }
