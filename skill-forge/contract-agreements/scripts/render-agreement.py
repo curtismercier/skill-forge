@@ -140,7 +140,7 @@ def serialize_section(content_lines: list[str]) -> str:
     return render_markdown_to_html(raw)
 
 
-def generate_html(sections: list[dict], doc_title: str, source_path: str) -> str:
+def generate_html(sections: list[dict], doc_title: str, source_path: str, markdown_text: str = '') -> str:
     """Generate a standalone editable HTML document."""
     # Build body content
     body_html = '<div class="contract" id="contract-document">\n'
@@ -172,23 +172,11 @@ def generate_html(sections: list[dict], doc_title: str, source_path: str) -> str
                 )
 
     # Signature section — special handling, not editable
-    body_html += '<div class="signature-section">\n'
-    body_html += '<hr>\n'
-    body_html += '<div class="signature-block">\n'
-    body_html += '  <p><strong>[PARTY A \u2014 NAME AND ROLE]</strong></p>\n'
-    body_html += '  <div class="sig-line"><span>Signature:</span> <span class="sig-space">________________________</span></div>\n'
-    body_html += '  <div class="sig-line"><span>Name:</span> <span class="sig-space">________________________</span></div>\n'
-    body_html += '  <div class="sig-line"><span>Date:</span> <span class="sig-space">________________________</span></div>\n'
-    body_html += '</div>\n'
-    body_html += '<div class="signature-block">\n'
-    body_html += '  <p><strong>[PARTY B \u2014 NAME AND ROLE]</strong></p>\n'
-    body_html += '  <div class="sig-line"><span>Signature:</span> <span class="sig-space">________________________</span></div>\n'
-    body_html += '  <div class="sig-line"><span>Name:</span> <span class="sig-space">________________________</span></div>\n'
-    body_html += '  <div class="sig-line"><span>Date:</span> <span class="sig-space">________________________</span></div>\n'
-    body_html += '</div>\n'
-    body_html += '</div>\n'
-
     body_html += '</div>\n'  # close contract
+
+    # Embed raw markdown source for save/load round-trip
+    escaped_source = html_module.escape(markdown_text)
+    body_html += f'<script id="raw-source" type="text/markdown">{escaped_source}</script>\n'
 
     # Toolbar
     toolbar = '''
@@ -196,15 +184,19 @@ def generate_html(sections: list[dict], doc_title: str, source_path: str) -> str
   <span class="toolbar-title">Contract Editor</span>
   <span class="toolbar-spacer"></span>
   <span class="toolbar-status" id="status-msg">Ready</span>
+  <button class="btn btn-load" onclick="document.getElementById('file-input').click()">\U0001f4c2 Load</button>
   <button class="btn btn-save" onclick="saveDocument()">\U0001f4be Save</button>
   <button class="btn btn-print" onclick="window.print()">\U0001f5a8\ufe0f Print / PDF</button>
   <button class="btn btn-reset" onclick="resetEdits()">\u21a9\ufe0f Reset</button>
+  <input type="file" id="file-input" accept=".md" style="display:none" onchange="loadDocument(event)">
 </div>
 '''
 
     # JavaScript for save and edit
     js = '''
 <script>
+let rawSource = document.getElementById('raw-source');
+
 function getDocumentText() {
   const contract = document.getElementById('contract-document');
   const sections = contract.querySelectorAll('section.editable-section');
@@ -219,12 +211,11 @@ function getDocumentText() {
   let before = title ? title.nextElementSibling : contract.firstElementChild;
   const nodes = [];
   let current = before;
-  while (current && current.tagName !== 'SECTION') {
-    if (current.nodeType === 1) nodes.push(current);
+  while (current && current.tagName !== 'SECTION' && current.id !== 'raw-source' && current.tagName !== 'SCRIPT') {
+    if (current.nodeType === 1 && current.id !== 'doc-metadata') nodes.push(current);
     current = current.nextElementSibling;
   }
   nodes.forEach(n => {
-    if (n.classList.contains('signature-section')) return;
     md += htmlToMarkdown(n.innerHTML || n.textContent) + '\\n';
   });
 
@@ -240,13 +231,6 @@ function getDocumentText() {
     }
   });
 
-  // Signatures
-  const sigSection = document.querySelector('.signature-section');
-  if (sigSection) {
-    const sigText = sigSection.textContent.trim();
-    md += '\\n---\\n\\n## Signatures\\n\\n' + sigText;
-  }
-
   return md;
 }
 
@@ -257,7 +241,7 @@ function htmlToMarkdown(html) {
   text = text.replace(/<strong[^>]*>(.*?)<\\/strong>/g, '**$1**');
   text = text.replace(/<em[^>]*>(.*?)<\\/em>/g, '*$1*');
 
-  // Convert <br> to newlines (within contenteditable divs)
+  // Convert <br> to newlines
   text = text.replace(/<br\\s*\\/?>/gi, '\\n');
 
   // Convert <p> to blocks
@@ -265,6 +249,18 @@ function htmlToMarkdown(html) {
 
   // Convert <li> to list items
   text = text.replace(/<li[^>]*>(.*?)<\\/li>/gi, '- $1\\n');
+
+  // Tables: convert back to pipe-delimited
+  text = text.replace(/<\\/thead>/gi, '');
+  text = text.replace(/<thead>/gi, '');
+  text = text.replace(/<\\/tbody>/gi, '');
+  text = text.replace(/<tbody>/gi, '');
+  text = text.replace(/<\\/tr>/gi, '|\\n');
+  text = text.replace(/<tr[^>]*>/gi, '');
+  text = text.replace(/<\\/th>/gi, '|');
+  text = text.replace(/<th[^>]*>/gi, '| ');
+  text = text.replace(/<\\/td>/gi, '|');
+  text = text.replace(/<td[^>]*>/gi, '| ');
 
   // Strip remaining tags
   text = text.replace(/<[^>]+>/g, '');
@@ -283,12 +279,26 @@ function htmlToMarkdown(html) {
   return text.trim();
 }
 
+function getDocTitle() {
+  const title = document.querySelector('h1.doc-title');
+  if (!title) return 'document';
+  return title.textContent.trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 function saveDocument() {
   const md = getDocumentText();
   const statusEl = document.getElementById('status-msg');
+  const slug = getDocTitle();
 
-  // Create a download link
-  const filename = 'settlement-agreement-' + new Date().toISOString().slice(0, 10) + '.md';
+  // Update hidden raw source for round-trip
+  const rawEl = document.getElementById('raw-source');
+  if (rawEl) rawEl.textContent = md;
+
+  // Download
+  const filename = slug + '-' + new Date().toISOString().slice(0, 10) + '.md';
   const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -299,7 +309,7 @@ function saveDocument() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  statusEl.textContent = '\u2705 Saved as ' + filename;
+  statusEl.textContent = '\\u2705 Saved as ' + filename;
   setTimeout(() => { statusEl.textContent = 'Ready'; }, 3000);
 }
 
@@ -308,8 +318,159 @@ function resetEdits() {
     location.reload();
   }
 }
+
+// --- Load / re-render from .md file ---
+
+function loadDocument(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    renderDocument(e.target.result);
+    document.getElementById('status-msg').textContent = '\\u2705 Loaded: ' + file.name;
+    setTimeout(() => {
+      document.getElementById('status-msg').textContent = 'Ready';
+    }, 3000);
+  };
+  reader.readAsText(file);
+
+  // Reset so same file can be loaded again
+  event.target.value = '';
+}
+
+function parseMarkdownSections(text) {
+  const lines = text.split('\\n');
+  const sections = [];
+  let current = { type: 'text', content: [] };
+  let sectionCount = 0;
+
+  const titleMatch = text.match(/^#\\s+(.+)$/m);
+  const docTitle = titleMatch ? titleMatch[1].trim() : 'Document';
+
+  for (const line of lines) {
+    const headingMatch = line.match(/^(#{1,3})\\s+(.+)$/);
+    if (headingMatch) {
+      if (current.content.length > 0) sections.push(current);
+      sectionCount++;
+      current = {
+        type: 'heading',
+        level: headingMatch[1].length,
+        text: headingMatch[2],
+        content: [line],
+        id: 'section-' + sectionCount
+      };
+    } else {
+      current.content.push(line);
+    }
+  }
+  if (current.content.length > 0) sections.push(current);
+
+  return { sections, docTitle };
+}
+
+function renderMarkdownToHTML(text) {
+  let result = text.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+  result = result.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
+
+  // Tables
+  const lines = result.split('\\n');
+  const newLines = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.includes('|') && i + 1 < lines.length && lines[i + 1].includes('---')) {
+      const headers = line.split('|').map(c => c.trim()).filter(c => c);
+      let tableHtml = '<table>\\n<thead>\\n<tr>';
+      headers.forEach(h => { tableHtml += '<th>' + h + '</th>'; });
+      tableHtml += '</tr>\\n</thead>\\n<tbody>\\n';
+      i += 2;
+      while (i < lines.length && lines[i].includes('|')) {
+        const cells = lines[i].split('|').map(c => c.trim()).filter(c => c);
+        tableHtml += '<tr>';
+        cells.forEach(c => { tableHtml += '<td>' + c + '</td>'; });
+        tableHtml += '</tr>\\n';
+        i++;
+      }
+      tableHtml += '</tbody>\\n</table>';
+      newLines.push(tableHtml);
+    } else {
+      if (line.trim() === '---') newLines.push('<hr>');
+      else newLines.push(line);
+      i++;
+    }
+  }
+  result = newLines.join('\\n');
+
+  // Lists
+  const listLines = result.split('\\n');
+  const finalLines = [];
+  let inList = false;
+  for (const line of listLines) {
+    const listMatch = line.match(/^\\s*[-*+]\\s+(.+)$/);
+    if (listMatch) {
+      if (!inList) { finalLines.push('<ul>'); inList = true; }
+      finalLines.push('  <li>' + listMatch[1] + '</li>');
+    } else {
+      if (inList) { finalLines.push('</ul>'); inList = false; }
+      finalLines.push(line);
+    }
+  }
+  if (inList) finalLines.push('</ul>');
+
+  return finalLines.join('\\n');
+}
+
+function renderDocument(markdownText) {
+  const parsed = parseMarkdownSections(markdownText);
+  const { sections, docTitle } = parsed;
+
+  // Update raw source
+  const rawEl = document.getElementById('raw-source');
+  if (rawEl) rawEl.textContent = markdownText;
+
+  // Update page title
+  document.title = docTitle + ' \\u2014 Preview';
+
+  // Rebuild contract body
+  const contract = document.getElementById('contract-document');
+  let html = '';
+
+  for (const section of sections) {
+    if (section.type === 'heading' && section.level === 1) {
+      html += '<h1 class=\"doc-title\" id=\"' + section.id + '\">'
+        + escapeHtml(section.text) + '</h1>\\n';
+    } else if (section.type === 'heading') {
+      const headingLines = section.content.slice(1).join('\\n');
+      const contentHtml = renderMarkdownToHTML(headingLines);
+      html += '<section id=\"' + section.id + '\" class=\"editable-section\">\\n';
+      html += '  <h' + section.level + ' class=\"section-heading\">'
+        + escapeHtml(section.text) + '</h' + section.level + '>\\n';
+      html += '  <div class=\"section-content\" contenteditable=\"true\">'
+        + contentHtml + '</div>\\n';
+      html += '</section>\\n';
+    } else {
+      const contentHtml = renderMarkdownToHTML(section.content.join('\\n'));
+      if (contentHtml.trim()) {
+        html += '<section class=\"editable-section\">\\n';
+        html += '  <div class=\"section-content\" contenteditable=\"true\">'
+          + contentHtml + '</div>\\n';
+        html += '</section>\\n';
+      }
+    }
+  }
+
+  contract.innerHTML = html;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(text));
+  return div.innerHTML;
+}
 </script>
 '''
+
 
     # CSS
     css = '''
@@ -360,6 +521,9 @@ function resetEdits() {
   .btn-save:hover { background: #3a9d5a; }
   .btn-print { background: #2d5a7d; border-color: #2d5a7d; }
   .btn-print:hover { background: #3a7a9d; }
+  .btn-reset { background: #7d2d2d; border-color: #7d2d2d; }
+  .btn-load { background: #5a5a7d; border-color: #5a5a7d; }
+  .btn-load:hover { background: #7a7a9d; }
   .btn-reset { background: #7d2d2d; border-color: #7d2d2d; }
   .btn-reset:hover { background: #9d3a3a; }
 
@@ -460,17 +624,7 @@ function resetEdits() {
     margin: 24px 0;
   }
 
-  .signature-section {
-    margin-top: 40px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .signature-block {
-    margin: 28px 0;
-    padding: 20px 0;
-  }
-
+  /* Signature blocks — used within editable content for named signature blocks */
   .sig-line {
     display: flex;
     align-items: center;
@@ -546,7 +700,7 @@ def main():
     text = input_path.read_text(encoding="utf-8")
     sections, doc_title = parse_markdown_sections(text)
 
-    html = generate_html(sections, doc_title, str(input_path.resolve()))
+    html = generate_html(sections, doc_title, str(input_path.resolve()), text)
 
     output_path = args.output or input_path.with_suffix(".html")
     output_path.write_text(html, encoding="utf-8")
