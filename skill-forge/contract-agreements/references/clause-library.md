@@ -258,6 +258,26 @@ service contracts where a revision round is offered.
 
 ---
 
+## Schedule / Exhibit Pattern
+
+When a prior proposal or document is incorporated by reference:
+
+```
+Recital B: [description], a copy of which is attached as Schedule A.
+
+---
+
+## Schedule A — [Title]
+
+[Attached: description of document]
+```
+
+The schedule should be attached as a separate file (PDF or HTML copy of
+the original proposal/email). Reference it in the recitals and attach it
+physically to the signed agreement.
+
+---
+
 ## General Provisions
 
 ### Governing law (Ontario)
