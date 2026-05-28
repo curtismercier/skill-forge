@@ -236,6 +236,28 @@ offer.
 
 ---
 
+## Change Request Template (Post-Launch Revisions)
+
+Use this for the one revision round included in post-launch support.
+Standard format keeps changes batchable and unambiguous:
+
+```
+Page URL — what's currently there → what it should say/do
+
+Examples:
+  /about/jay-arzadon — "experience" section lists 3 certifications
+    → update to 5, add 2026 cert
+  /contact — form says "we'll respond in 48 hours"
+    → change to "24 hours"
+  /pricing — RMT pricing column missing "60-min session" at $120
+    → add it
+```
+
+Include in post-launch support section of settlement agreements or
+service contracts where a revision round is offered.
+
+---
+
 ## General Provisions
 
 ### Governing law (Ontario)
