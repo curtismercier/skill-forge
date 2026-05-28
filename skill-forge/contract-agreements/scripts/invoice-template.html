@@ -198,7 +198,9 @@
       <strong>To:</strong><br>
       <span id="pv-to-name">{TO_NAME}</span><br>
       <span style="color:#555;" id="pv-to-client">{TO_CLIENT}</span><br>
-      <span style="color:#888;font-size:10pt;" id="pv-to-contact">{TO_CONTACT}</span>
+      <span style="color:#888;font-size:10pt;" id="pv-to-address">{TO_ADDRESS}</span><br>
+      <span style="color:#888;font-size:10pt;" id="pv-to-contact">{TO_CONTACT}</span><br>
+      <span style="color:#888;font-size:10pt;" id="pv-to-phone">{TO_PHONE}</span>
     </div>
 
     <h2 style="font-size:14pt;margin-bottom:8px;">Services Rendered</h2>
@@ -268,12 +270,15 @@
         <div class="detail-field"><label>Name</label><input id="det-from-name" value="{FROM_NAME}" oninput="updatePreview()"></div>
         <div class="detail-field"><label>Business</label><input id="det-from-business" value="{FROM_BUSINESS}" oninput="updatePreview()"></div>
         <div class="detail-field"><label>Contact</label><input id="det-from-contact" value="{FROM_CONTACT}" oninput="updatePreview()"></div>
+        <div class="detail-field"><label>Phone</label><input id="det-from-phone" value="{FROM_PHONE}" oninput="updatePreview()"></div>
       </div>
       <div>
         <h3 class="section-title">To (Client)</h3>
         <div class="detail-field"><label>Name</label><input id="det-to-name" value="{TO_NAME}" oninput="updatePreview()"></div>
         <div class="detail-field"><label>Client/Business</label><input id="det-to-client" value="{TO_CLIENT}" oninput="updatePreview()"></div>
+        <div class="detail-field"><label>Address</label><input id="det-to-address" value="{TO_ADDRESS}" oninput="updatePreview()"></div>
         <div class="detail-field"><label>Contact</label><input id="det-to-contact" value="{TO_CONTACT}" oninput="updatePreview()"></div>
+        <div class="detail-field"><label>Phone</label><input id="det-to-phone" value="{TO_PHONE}" oninput="updatePreview()"></div>
       </div>
     </div>
 
@@ -415,7 +420,9 @@ function updatePreview() {
     'pv-from-contact': g('det-from-contact'),
     'pv-to-name': g('det-to-name'),
     'pv-to-client': g('det-to-client'),
+    'pv-to-address': g('det-to-address'),
     'pv-to-contact': g('det-to-contact'),
+    'pv-to-phone': g('det-to-phone'),
     'pv-number': g('det-number'),
     'pv-date': g('det-date'),
     'pv-period': g('det-period'),
@@ -485,9 +492,12 @@ function saveInvoice() {
   var fromName = g('det-from-name');
   var fromBusiness = g('det-from-business');
   var fromContact = g('det-from-contact');
+  var fromPhone = g('det-from-phone');
   var toName = g('det-to-name');
   var toClient = g('det-to-client');
+  var toAddress = g('det-to-address');
   var toContact = g('det-to-contact');
+  var toPhone = g('det-to-phone');
   var optBLabel = g('det-opt-b-label') || 'Option B \u2014 Settlement';
   var optBAmt = g('det-opt-b-amt');
   var optBExpiry = g('det-opt-b-expiry');
@@ -503,8 +513,8 @@ function saveInvoice() {
   md += '**Invoice #:** ' + number + '\n';
   md += '**Date:** ' + dateVal + '\n';
   md += '**Period:** ' + period + '\n\n';
-  md += '**From:**\n' + fromName + '\n' + fromBusiness + '\n' + fromContact + '\n\n';
-  md += '**To:**\n' + toName + '\n' + toClient + '\n' + toContact + '\n\n';
+  md += '**From:**\n' + fromName + '\n' + fromBusiness + '\n' + fromContact + '\n' + fromPhone + '\n\n';
+  md += '**To:**\n' + toName + '\n' + toClient + '\n' + toAddress + '\n' + toContact + '\n' + toPhone + '\n\n';
   md += '---\n\n';
   md += '## Services\n\n';
   md += '| # | Description | Hours | Rate | Amount |\n';
@@ -571,8 +581,8 @@ function parseMarkdown(text) {
   s('det-period', getVal('Period'));
 
   // From / To blocks
-  var fromElems = ['det-from-name', 'det-from-business', 'det-from-contact'];
-  var toElems = ['det-to-name', 'det-to-client', 'det-to-contact'];
+  var fromElems = ['det-from-name', 'det-from-business', 'det-from-contact', 'det-from-phone'];
+  var toElems = ['det-to-name', 'det-to-client', 'det-to-address', 'det-to-contact', 'det-to-phone'];
   var section = '';
   var fi = 0, ti = 0;
   for (var i = 0; i < lines.length; i++) {

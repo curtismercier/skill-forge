@@ -78,9 +78,12 @@ def parse_invoice_markdown(text: str) -> dict:
         'from_name': '',
         'from_business': '',
         'from_contact': '',
+        'from_phone': '',
         'to_name': '',
         'to_client': '',
+        'to_address': '',
         'to_contact': '',
+        'to_phone': '',
         'items': [],
         'opt_b_label': 'Option B \u2014 Settlement',
         'opt_b_amount': '',
@@ -126,6 +129,7 @@ def parse_invoice_markdown(text: str) -> dict:
                 if len(next_lines) >= 1: data['from_name'] = next_lines[0]
                 if len(next_lines) >= 2: data['from_business'] = next_lines[1]
                 if len(next_lines) >= 3: data['from_contact'] = next_lines[2]
+                if len(next_lines) >= 4: data['from_phone'] = next_lines[3]
                 continue
             if stripped == '**To:**':
                 idx = lines.index(line)
@@ -137,7 +141,9 @@ def parse_invoice_markdown(text: str) -> dict:
                         break
                 if len(next_lines) >= 1: data['to_name'] = next_lines[0]
                 if len(next_lines) >= 2: data['to_client'] = next_lines[1]
-                if len(next_lines) >= 3: data['to_contact'] = next_lines[2]
+                if len(next_lines) >= 3: data['to_address'] = next_lines[2]
+                if len(next_lines) >= 4: data['to_contact'] = next_lines[3]
+                if len(next_lines) >= 5: data['to_phone'] = next_lines[4]
                 continue
 
         if current_section == 'payment terms':
@@ -209,9 +215,12 @@ def generate_html(data: dict, source_path: str = '') -> str:
         'FROM_NAME': data.get('from_name', ''),
         'FROM_BUSINESS': data.get('from_business', ''),
         'FROM_CONTACT': data.get('from_contact', ''),
+        'FROM_PHONE': data.get('from_phone', ''),
         'TO_NAME': data.get('to_name', ''),
         'TO_CLIENT': data.get('to_client', ''),
+        'TO_ADDRESS': data.get('to_address', ''),
         'TO_CONTACT': data.get('to_contact', ''),
+        'TO_PHONE': data.get('to_phone', ''),
         'NUMBER': data.get('number', ''),
         'DATE_VAL': data.get('date', ''),
         'PERIOD': data.get('period', ''),
