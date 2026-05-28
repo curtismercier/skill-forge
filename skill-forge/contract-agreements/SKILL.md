@@ -8,7 +8,7 @@ metadata:
   source-style: authored
   home-repo: curtismercier/skill-forge/skill-forge/contract-agreements
   created: 2026-05-27
-  last_reviewed: 2026-05-27
+  last_reviewed: 2026-05-28
   review_interval_days: 180
 ---
 
@@ -28,9 +28,11 @@ Draft Ontario-law legal agreements for developer-client arrangements. Produces s
 - Payment terms and invoicing
 - NDA / confidentiality agreements
 - Consulting agreements (hourly or project-based)
+- Invoices (demand for payment, itemized billing, full + settlement dual-option)
 
 **What it does NOT cover:**
 - Court filings, litigation strategy, or legal advice
+- Bookkeeping, accounting, or tax advice (invoices are billing documents, not financial records)
 - Employment agreements (employee vs contractor distinction)
 - Partnership / joint venture / operating agreements (different domain)
 - Anything requiring notarization or court filing
@@ -46,7 +48,7 @@ Draft Ontario-law legal agreements for developer-client arrangements. Produces s
 
 ## Output format
 
-Every document follows this structure:
+Every document (agreements/contracts) follows this structure:
 
 ```markdown
 ⚠️ DISCLAIMER: This is a template for reference purposes only. Have it reviewed
@@ -135,6 +137,34 @@ Include these sections in addition to the general structure:
 | Termination | Notice periods, kill fees, surviving obligations |
 | Liability | Limitation of liability, indemnification |
 
+### Invoice specifics
+
+Invoices are billing documents — they itemize work performed and demand payment.
+Unlike agreements, they are not signed by both parties. They can include optional
+settlement offers (Path A-style dual-option) as an alternative to the full amount.
+
+| Section | What it covers |
+|---|---|
+| Header | From (business/individual), To (client), invoice #, date, period covered |
+| Services Rendered | Itemized list with description, quantity (hours), rate, amount |
+| Total | Clear total due, optionally with currency stated |
+| Payment Options (optional) | Alternative settlement path with expiry date (e.g., "$3,500 if paid within 14 days") |
+| Payment Terms | Due date, accepted methods (e-transfer, wire, cheque), late payment interest |
+| Legal Footer | Offer to Settle under Rule 19 (if applicable), s.128 interest notice, disclaimer |
+| Notes | Contextual references to prior correspondence, quotes from client messages |
+
+**Key differences from agreements:**
+- Unilateral (from issuer) — no signature block needed
+- Always includes REMIT-TO (payment destination) — bank details or e-transfer address
+- Settlement/dual-option structure is a demand with a carrot, not a negotiated compromise
+- References to prior communication (quotes, email excerpts) can establish the timeline
+
+**Rendering:** The same `render-agreement.py` script works for invoices — it converts
+markdown to editable HTML with the same inline-edit + print-to-PDF workflow.
+
+*Example in practice: Invoice 2026-05-19-ARZ-001 (handoff matter) — full HTML invoice
+with dual-option payment structure, embedded client quotes, and Offer to Settle language.*
+
 ## Disclaimers required
 
 **Every document MUST include** at the top:
@@ -198,3 +228,5 @@ Before pushing skill changes to a public repo:
 - **Don't write IP assignment as "all rights" without listing what "all rights" includes** — specificity prevents disputes
 - **Don't skip the Independent Legal Advice clause** when the document involves a settlement or release
 - **Don't use US-specific terms** (e.g., "small claims court" should reference Ontario Small Claims Court, "Tort law" should reference Ontario's)
+- **Don't add signature blocks to invoices** — they're billing documents, not agreements
+- **Don't embed bank details in the template** — use [bank details to be provided] in templates; fill when sending

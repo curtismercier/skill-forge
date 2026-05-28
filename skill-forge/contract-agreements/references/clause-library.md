@@ -1,6 +1,6 @@
 # Clause Library — Reusable Contract Provisions
 
-> **Last verified:** 2026-05-27. Adapt to context — don't copy blindly.
+> **Last verified:** 2026-05-28. Adapt to context — don't copy blindly.
 > These are starting points, not final language.
 > Reference: CaseMark settlement-agreement skill (github.com/CaseMark/skills) for
 > US-litigation-grade settlement structure. Adapted for Ontario context here.
@@ -164,6 +164,74 @@ Either Party may terminate this Agreement immediately upon written notice if:
       the breach within [N] days of written notice; or
   (b) The other Party becomes insolvent, makes an assignment for the benefit of
       creditors, or ceases to carry on business.
+```
+
+---
+
+## Invoice Clauses
+
+### Header / To-From
+```
+**From:** [Business Name or Individual]
+[Address / Contact]
+
+**To:** [Client Name / Business]
+[Client Address / Contact]
+
+**Invoice #:** [NUMBER]
+**Date:** [DATE]
+**Period:** [START — END]
+```
+
+### Services rendered (itemized)
+```
+| # | Description | Quantity | Rate | Amount |
+|---|---|---|---|---|
+| 1 | [Item description — scope summary, deliverable] | [hours/qty] | $[RATE] | $[AMOUNT] |
+| 2 | [Infrastructure / tools / third-party costs] | — | — | $[AMOUNT] |
+|   | **Total due** | | | **$[TOTAL]** |
+```
+
+### Dual-option payment (full amount + settlement alternative)
+```
+**Option A — Full amount**
+$[FULL_AMOUNT] — total due for all services rendered.
+
+**Option B — Settlement**
+$[SETTLEMENT_AMOUNT] — honour the [proposal name/date] terms.
+Available for [N] days from this invoice date.
+
+*Note: Option B is a formal Offer to Settle under Rule 19, O. Reg. 258/98 —
+double costs may apply if refused.*
+```
+
+### Payment instructions
+```
+**Payment Method:** E-transfer to [EMAIL] / Wire transfer to [BANK]
+**Account:** [Details — fill per-instance, never hardcode]
+**Due:** [upon receipt / NET15 / NET30]
+```
+
+### Late payment / interest (invoice version)
+```
+Amounts not paid when due shall bear interest at the rate prescribed under
+s. 128 of the Courts of Justice Act (Ontario) from the due date until payment.
+```
+
+### Invoice footer / disclaimer
+```
+This invoice covers all work performed during the stated period. A detailed
+time record is available on request. No payment for the above services has
+been received unless otherwise noted.
+```
+
+### Offer to Settle reference (Ontario Rule 19)
+```
+Option B above is a formal Offer to Settle within the meaning of Rule 19 of
+the Ontario Rules of Civil Procedure, O. Reg. 258/98. If the Client does not
+accept this offer and a court later awards an amount equal to or less than the
+offer, the Developer may be entitled to double costs from the date of the
+offer.
 ```
 
 ---
