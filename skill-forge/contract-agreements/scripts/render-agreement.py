@@ -150,8 +150,18 @@ def generate_html(sections: list[dict], doc_title: str, source_path: str, markdo
 
     for section in sections:
         if section["type"] == "heading" and section["level"] == 1:
-            # Main title — not editable (acts as title)
+            # Main title
             body_html += f'<h1 class="doc-title" id="{section["id"]}">{html_module.escape(section["text"])}</h1>\n'
+            # Render preamble (Date, Parties, etc.) as an editable section
+            preamble_lines = section["content"][1:]  # skip the heading line
+            preamble_text = '\n'.join(preamble_lines).strip()
+            if preamble_text:
+                preamble_html = serialize_section(preamble_lines)
+                body_html += (
+                    f'<section class="editable-section">\n'
+                    f'  <div class="section-content" contenteditable="true">{preamble_html}</div>\n'
+                    f'</section>\n'
+                )
         elif section["type"] == "heading":
             section_id = section["id"]
             section_text = html_module.escape(section["text"])
