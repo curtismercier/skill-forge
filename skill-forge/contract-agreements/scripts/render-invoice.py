@@ -199,6 +199,9 @@ def generate_html(data: dict, source_path: str = '') -> str:
     template_path = Path(__file__).parent / 'invoice-template.html'
     html = template_path.read_text(encoding='utf-8')
 
+    # Determine if Option B section should show
+    has_option_b = bool(data.get('opt_b_amount'))
+
     # Substitute placeholders
     placeholders = {
         'TITLE': f"Invoice Editor \u2014 {data.get('number') or 'New Invoice'}",
@@ -212,7 +215,7 @@ def generate_html(data: dict, source_path: str = '') -> str:
         'NUMBER': data.get('number', ''),
         'DATE_VAL': data.get('date', ''),
         'PERIOD': data.get('period', ''),
-        'OPT_B_LABEL': data.get('opt_b_label', 'Option B \u2014 Settlement'),
+        'OPT_B_LABEL': data.get('opt_b_label', 'Settlement'),
         'OPT_B_AMOUNT': data.get('opt_b_amount', ''),
         'OPT_B_EXPIRY': data.get('opt_b_expiry', ''),
         'PAYMENT_METHOD': data.get('payment_method', ''),
@@ -223,6 +226,13 @@ def generate_html(data: dict, source_path: str = '') -> str:
 
     for key, val in placeholders.items():
         html = html.replace(f'{{{key}}}', str(val))
+
+    # Hide Options section if no Option B amount (simple invoice, no dual-option)
+    if not has_option_b:
+        html = html.replace(
+            'id="inv-options-section"',
+            'id="inv-options-section" style="display:none"'
+        )
 
     return html
 
