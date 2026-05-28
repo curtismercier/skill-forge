@@ -705,6 +705,7 @@ def main():
     )
     parser.add_argument("input", help="Path to the markdown agreement file")
     parser.add_argument("--output", "-o", help="Output HTML path (default: input path with .html)")
+    parser.add_argument("--pdf", action="store_true", help="Also generate a PDF version via md-to-pdf")
     parser.add_argument("--open", action="store_true", help="Open in browser after rendering")
     args = parser.parse_args()
 
@@ -724,6 +725,29 @@ def main():
     print(f"Rendered: {output_path}")
     print(f"  File size: {output_path.stat().st_size:,} bytes")
     print(f"  Sections: {len([s for s in sections if s['type'] == 'heading'])}")
+
+    if args.pdf:
+        import subprocess
+        pdf_path = output_path.with_suffix('.pdf')
+        script_dir = Path(__file__).parent
+        css_path = script_dir / 'pdf-contract.css'
+        cmd = [
+            'md-to-pdf',
+            '--stylesheet', str(css_path),
+            '--pdf-options', '{"format":"Letter","margin":"0.8in 0.7in"}',
+            str(input_path),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            # md-to-pdf outputs next to the source file, move it
+            src_pdf = input_path.with_suffix('.pdf')
+            if src_pdf.exists():
+                import shutil
+                shutil.move(str(src_pdf), str(pdf_path))
+            print(f"  PDF:    {pdf_path}")
+            print(f"  PDF size: {pdf_path.stat().st_size:,} bytes")
+        else:
+            print(f"  PDF generation failed: {result.stderr.strip()}", file=sys.stderr)
 
     if args.open:
         import webbrowser

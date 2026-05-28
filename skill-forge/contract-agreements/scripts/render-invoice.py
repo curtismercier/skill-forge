@@ -252,6 +252,7 @@ def main():
     )
     parser.add_argument("input", nargs="?", help="Path to the invoice markdown file")
     parser.add_argument("--output", "-o", help="Output HTML path")
+    parser.add_argument("--pdf", action="store_true", help="Also generate a PDF version via md-to-pdf")
     parser.add_argument("--open", action="store_true", help="Open in browser after rendering")
     args = parser.parse_args()
 
@@ -279,6 +280,27 @@ def main():
     print(f"Rendered: {output_path}")
     print(f"  File size: {output_path.stat().st_size:,} bytes")
     print(f"  Items: {len(data.get('items', []))}")
+
+    if args.pdf and args.input:
+        import subprocess, shutil
+        pdf_path = output_path.with_suffix('.pdf')
+        script_dir = Path(__file__).parent
+        css_path = script_dir / 'pdf-contract.css'
+        cmd = [
+            'md-to-pdf',
+            '--stylesheet', str(css_path),
+            '--pdf-options', '{"format":"Letter","margin":"0.7in 0.6in"}',
+            str(input_path),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            src_pdf = input_path.with_suffix('.pdf')
+            if src_pdf.exists():
+                shutil.move(str(src_pdf), str(pdf_path))
+            print(f"  PDF:    {pdf_path}")
+            print(f"  PDF size: {pdf_path.stat().st_size:,} bytes")
+        else:
+            print(f"  PDF generation failed: {result.stderr.strip()}", file=sys.stderr)
 
     if args.open:
         webbrowser.open(str(output_path.resolve()))
