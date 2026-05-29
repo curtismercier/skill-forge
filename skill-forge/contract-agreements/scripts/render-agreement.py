@@ -488,7 +488,7 @@ function escapeHtml(text) {
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: 'Times New Roman', Garamond, Georgia, serif;
+    font-family: Georgia, 'Times New Roman', serif;
     color: #1a1a1a;
     background: #f2f0eb;
     padding-top: 60px;
@@ -582,8 +582,8 @@ function escapeHtml(text) {
   }
 
   .section-content {
-    line-height: 1.8;
-    font-size: 12pt;
+    line-height: 1.85;
+    font-size: 13pt;
     padding: 4px 0;
     min-height: 1em;
     outline: none;
