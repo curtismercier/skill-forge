@@ -731,10 +731,18 @@ def main():
         pdf_path = output_path.with_suffix('.pdf')
         script_dir = Path(__file__).parent
         css_path = script_dir / 'pdf-contract.css'
+        import json
+        pdf_opts = {
+            'format': 'Letter',
+            'margin': '0.8in 0.7in',
+            'displayHeaderFooter': True,
+            'footerTemplate': "<div style='font-size:7.5pt;font-family:Georgia,serif;color:#888;width:100%;text-align:center;'>Page <span class='pageNumber'></span> of <span class='totalPages'></span></div>",
+            'headerTemplate': "<div style='font-size:7pt;font-family:Georgia,serif;color:#aaa;width:100%;text-align:center;'>COMPLETION AGREEMENT AND MUTUAL RELEASE</div>",
+        }
         cmd = [
             'md-to-pdf',
             '--stylesheet', str(css_path),
-            '--pdf-options', '{"format":"Letter","margin":"0.8in 0.7in"}',
+            '--pdf-options', json.dumps(pdf_opts),
             str(input_path),
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)

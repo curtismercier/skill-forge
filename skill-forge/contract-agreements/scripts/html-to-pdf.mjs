@@ -78,7 +78,8 @@ async function main() {
       format,
       margin,
       printBackground: true,
-      displayHeaderFooter: false,
+      displayHeaderFooter: true,
+      footerTemplate: '<div style="font-size:7.5pt;font-family:Georgia,\'Times New Roman\',serif;color:#999;width:100%;text-align:center;padding:4px 0.7in;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>',
       preferCSSPageSize: true,
     });
 
