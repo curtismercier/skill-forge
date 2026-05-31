@@ -16,3 +16,6 @@ env/
 dist/
 build/
 *.skill
+.soma/
+.soma/*/node_modules/
+.soma/*/__pycache__/
