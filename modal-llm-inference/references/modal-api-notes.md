@@ -27,6 +27,9 @@ Highest-leverage for this skill:
 | [multinode-training-guide](https://github.com/modal-labs/multinode-training-guide) | Distributed training patterns | Useful reference when scaling beyond single-node inference |
 | [awesome-modal](https://github.com/modal-labs/awesome-modal) | Curated community projects | Good for finding patterns others have shipped |
 | [sglang fork](https://github.com/modal-labs/sglang) | Modal's SGLang fork | SGLang is preferred over vLLM for some large models (see `very_large_models.py`) |
+| [deepseek_v4.py](https://github.com/modal-labs/modal-examples/blob/main/06_gpu_and_ml/llm-serving/deepseek_v4.py) | Modal's official DS V4 Pro deploy | SGLang + `flashinfer_mxfp4` on 8×B200. Uses `config_deepseek_v4.yaml` for MoE tuning. |
+| [config_deepseek_v4.yaml](https://github.com/modal-labs/modal-examples/blob/main/06_gpu_and_ml/llm-serving/config_deepseek_v4.yaml) | Reference tuning for DeepSeek V4 | `flashinfer_mxfp4` MoE runner, EAGLE spec decode (3 steps, 4 draft tok), `mem-fraction-static: 0.82`, `max-running-requests: 32` |
+| [very_large_models.py](https://github.com/modal-labs/modal-examples/blob/main/06_gpu_and_ml/llm-serving/very_large_models.py) | SGLang pattern for 100B+ models | Cls + `@modal.experimental.http_server`, dummy-weights iteration, multi-GPU tensor-parallel |
 | synchronicity, mountpoint-s3, gvisor fork | Infrastructure libraries | Usually not relevant for inference; here for completeness |
 
 The rest of the 77 repos are language bindings, infrastructure libraries, internal tools, and demos. When stuck, check `modal-examples` first — it's continuously tested against the current Modal API.
@@ -34,7 +37,9 @@ The rest of the 77 repos are language bindings, infrastructure libraries, intern
 ## Verified API specifics (the stuff I got wrong before)
 
 ### Image base
-- **Use:** `modal.Image.from_registry("nvidia/cuda:12.9.0-devel-ubuntu22.04", add_python="3.12").entrypoint([])`
+- **For vLLM:** `modal.Image.from_registry("nvidia/cuda:12.9.0-devel-ubuntu22.04", add_python="3.12").entrypoint([])`
+- **For SGLang (most large models):** `modal.Image.from_registry("lmsysorg/sglang:latest").entrypoint([])` — use this for DeepSeek V4, GLM 5, Kimi-K2
+- **For DeepSeek V4 specifically (Blackwell):** `modal.Image.from_registry("lmsysorg/sglang:deepseek-v4-blackwell").entrypoint([])` — custom Blackwell build with `flashinfer_mxfp4` support
 - **Don't use:** `modal.Image.debian_slim()` for vLLM work. It technically installs, but the canonical example uses the CUDA-devel base for a reason — you get the full CUDA toolkit, which some kernels at build time expect.
 - **Definitely don't use:** `modal.Image.debian_windows()` — not a thing. If you see this in code, it's LLM-hallucinated.
 
@@ -128,7 +133,7 @@ Verified against https://modal.com/docs/guide/memory-snapshots (pulled April 202
 - If your cold start is dominated by weight download, snapshots won't help and may even add overhead
 
 **Incompatibilities (GPU snapshots are alpha):**
-- Generally **incompatible with multi-GPU tensor-parallel setups** — our MiniMax example (4×H200) cannot use GPU snapshots today
+- **Incompatible with multi-GPU tensor-parallel setups** — GPU memory snapshots use CUDA's cuMem API which is incompatible with the NCCL tensor-parallel memory topology. Any deployment with `--tensor-parallel-size > 1` or `tp-size > 1` cannot use GPU snapshots. Attempting to combine them silently fails or causes undefined behavior. Single-GPU deployments only.
 - Incompatible with non-CUDA GPU code
 - Can conflict with `torch.compile` — mitigation is `TORCHINDUCTOR_COMPILE_THREADS=1`
 - Watch for `torch.cuda.is_available()` / `torch.cuda.get_device_capability()` during import: they initialize CUDA as zero-device, breaking snapshots. `xformers` is known to do this.

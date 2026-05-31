@@ -1,0 +1,32 @@
+ # General Config
+ host: 0.0.0.0
+ log-level: info
+
+ # Model Config
+ tool-call-parser: deepseekv4
+ reasoning-parser: deepseek-v4
+ trust-remote-code: true
+
+ # Memory — 4×H200
+ mem-fraction-static: 0.82
+ chunked-prefill-size: 4096
+
+ # MoE — flashinfer_mxfp4 for Hopper (FP4 weights on H200)
+ moe-runner-backend: flashinfer_mxfp4
+
+ # Observability
+ enable-metrics: true
+ collect-tokens-histogram: true
+
+ # Batching
+ max-running-requests: 32
+ cuda-graph-max-bs: 32
+
+ # SpecDec (EAGLE — recommended by DeepSeek V4 release notes)
+ speculative-algorithm: EAGLE
+ speculative-num-steps: 3
+ speculative-eagle-topk: 1
+ speculative-num-draft-tokens: 4
+
+ # Tuning
+ disable-flashinfer-autotune: true

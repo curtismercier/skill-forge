@@ -766,6 +766,83 @@ class RequestCoalescer:
 | Spot Instances | 60-70% | Medium | Fault-tolerant |
 | Request Coalescing | 30-50% | High | Variable load |
 
+## Self-Host vs API: The Honest Comparison
+
+Before deploying any model on Modal, ask: **"Can I get this cheaper via an API?"**
+
+For most workloads in 2026, the answer is **yes**. API providers like OpenRouter pool GPU capacity across thousands of customers and pass on economies of scale that a single-user Modal deployment cannot match.
+
+### Real-World Cost Comparison (May 2026)
+
+| Model | OpenRouter ($/M tok) | Modal GPU required | Modal cost/hr | Modal cost/M tok (50 tok/s) |
+|---|---|---|---|---|
+| DeepSeek V4 Flash | $0.10 / $0.20 | 4×H200 | $18.16 | $100.89 |
+| DeepSeek V4 Pro | $0.43 / $0.87 | 8×B200 | $50.00 | $277.78 |
+| Gemma 4 26B-A4B | est. $0.50-$1.00 | 1×H200 | $4.54 | $25.22 |
+| Qwen3-32B | est. $0.30-$0.80 | 1×H200 | $4.54 | $25.22 |
+
+**At typical throughput (50-100 tokens/s), Modal is 50-600× more expensive per token than API inference.**
+
+### When Self-Hosting Actually Wins
+
+| Scenario | Why | Example |
+|---|---|---|
+| **High concurrency (100+ sessions)** | Single GPU serves all requests; API charges per-token per-session | 100 simultaneous agents on 1×H200 vs 100× API calls |
+| **Privacy/Data residency** | No data leaves your endpoint | Regulated codebases, proprietary data |
+| **Fine-tuned models** | API providers don't run your custom weights | Domain-specific fine-tunes |
+| **Predictable cost cap** | Fixed GPU cost regardless of usage | Budget-sensitive batch processing |
+| **Off-peak batch** | Spin up GPU, process 50M tokens, tear down | Overnight batch jobs at $4.54/hr |
+
+### The Breakeven Math
+
+For a given GPU cost `C_gpu` per hour and an API price `P_api` per million tokens:
+
+```
+Breakeven throughput = C_gpu / P_api   (millions of tokens per hour)
+```
+
+| Model/GPU | GPU/hr | OpenRouter/M | Breakeven throughput | Realistic max throughput |
+|---|---|---|---|---|
+| DS V4 Flash (4×H200) | $18.16 | $0.14 | **129.7M tok/hr** | 2-5M tok/hr |
+| Gemma 4 26B (1×H200) | $4.54 | $0.75 (est.) | **6.1M tok/hr** | 5-10M tok/hr |
+| Qwen3-32B (1×H200) | $4.54 | $0.50 (est.) | **9.1M tok/hr** | 2-5M tok/hr |
+
+**Only Gemma 4 26B comes close** to breaking even because its MoE architecture (4B active) pushes high throughput. Even then, it requires constant 90%+ GPU utilization.
+
+### Decision Table
+
+Use this when a user asks "should I deploy X on Modal or use an API?"
+
+```
+1. Does the model have an API equivalent at reasonable pricing?
+   YES → Go to 2
+   NO  → Self-host (only option)
+
+2. Do you need 100+ concurrent sessions or data privacy?
+   YES → Self-host may make sense — run the breakeven math
+   NO  → Use the API (cheaper by 10-600×)
+
+3. Is it a batch job that can complete in <1 GPU-hour?
+   YES → Self-host is fine (small absolute cost)
+   NO  → Use the API (sustained self-host burns money)
+```
+
+### The $30 Free Credits Play
+
+Modal's $30/mo free credits change the math for **experimentation**. You can:
+
+- Run Gemma 4 26B for **6.6 hours/month for free** ($4.54/hr)
+- Run DS V4 Flash for **~1.6 hours/month for free** ($18.16/hr)
+- Run Qwen3-32B for **6.6 hours/month for free**
+
+This is genuinely useful for: testing a model before committing to API usage, running one-off batch jobs, or benchmarking throughput. **Don't deploy for sustained serving on free credits** — you'll exhaust them in days.
+
+### The Right Takeaway
+
+Self-hosting on Modal is not a cost-saving measure against 2026 API pricing. It's a **capability-enabling** measure: it lets you run models the API doesn't offer, control your data, and cap your costs. If you're doing it to save money on an existing API bill, the math almost never works.
+
+Optimize accordingly: use Modal for what it's good at, and use APIs for what they're good at. Don't try to make Modal compete on per-token cost with a subsidized API — it can't win there.
+
 ## Next Steps
 
 - Implement [TUI/Agent Patterns](05-tui-agent-patterns.md) for terminal agents

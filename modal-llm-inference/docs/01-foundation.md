@@ -6,22 +6,24 @@ snippets in this file illustrate patterns; copy-paste-ready runnable examples
 live in `examples/basic-deployment/`.
 -->
 
-# Modal vLLM Inference Foundation
+# Modal LLM Inference Foundation (vLLM & SGLang)
 
 ## Purpose
 
-This document covers core concepts, architecture patterns, and essential configuration for deploying vLLM inference on Modal.com. It serves as the foundational layer for all subsequent skill levels.
+This document covers core concepts, architecture patterns, and essential configuration for deploying LLM inference on Modal.com using vLLM (smaller models, 1-2 GPUs) or SGLang (large models, 3+ GPUs, MXFP4). It serves as the foundational layer for all subsequent skill levels.
 
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
-2. [Modal SDK Basics](#modal-sdk-basics)
-3. [vLLM Configuration](#vllm-configuration)
-4. [GPU Requirements](#gpu-requirements)
-5. [Volume Caching](#volume-caching)
-6. [Quick Start Example](#quick-start-example)
-7. [Health Checks](#health-checks)
-8. [Next Steps](#next-steps)
+2. [Engine Selection: vLLM vs SGLang](#engine-selection-vllm-vs-sglang)
+3. [Modal SDK Basics](#modal-sdk-basics)
+4. [vLLM Configuration](#vllm-configuration)
+5. [SGLang Configuration](#sglang-configuration)
+6. [GPU Requirements](#gpu-requirements)
+7. [Volume Caching](#volume-caching)
+8. [Quick Start Example](#quick-start-example)
+9. [Health Checks](#health-checks)
+10. [Next Steps](#next-steps)
 
 ## Architecture Overview
 
@@ -42,14 +44,44 @@ Modal provides serverless GPU infrastructure for running vLLM inference. The dep
 ```
 Client Request
     ↓
-Modal Web Server (port 8000)
+Modal Web Server (port 8000) or `@modal.experimental.http_server`
     ↓
-vLLM API Server (subprocess)
+vLLM API Server (subprocess) or SGLang Server (subprocess)
     ↓
-GPU (H200/A100)
+GPU (H200/A100/B200)
     ↓
 Model Weights (cached on Volume)
 ```
+
+## Engine Selection: vLLM vs SGLang
+
+This skill supports both vLLM and SGLang. Choose based on your model size and precision requirements:
+
+| Factor | vLLM | SGLang |
+|---|---|---|
+| Active param range | <70B (1-2 GPUs) | Any size (1-16 GPUs) |
+| Multi-GPU tensor-parallel | Supported | Preferred (better scaling at 4+ GPUs) |
+| FP4/MXFP4 precision | Not supported | **Required** for DeepSeek V4 MXFP4 (`flashinfer_mxfp4`) |
+| Cold-start speed | Faster (simpler JIT) | Slower for first boot, but GPU snapshots available |
+| Model support | Broad (runs most HF models) | Narrower but deeper for specific architectures |
+| Modal deployment pattern | `@modal.web_server` wrapping `vllm serve` | `modal.Cls` + `@modal.experimental.http_server` with lifecycle hooks |
+
+**Decision rule:**
+- Model fits on **1-2 GPUs** AND uses **FP8/bf16**? → Use **vLLM** (simpler, faster cold starts)
+- Model needs **3+ GPUs** OR uses **FP4/MXFP4** OR is a **DeepSeek V4 variant**? → Use **SGLang** (`flashinfer_mxfp4`, better multi-GPU scaling)
+- Model is **100B+ total params** and you want dummy-weights iteration? → Use **SGLang** (Modal's `very_large_models.py` supports `APP_USE_DUMMY_WEIGHTS=1`)
+- **Not sure?** → Start with vLLM. If you hit OOM or need >2 GPUs, switch to SGLang.
+
+### Canonical Modal examples by engine
+
+| Engine | Example file | What it demonstrates |
+|---|---|---|
+| vLLM | `vllm_inference.py` | Single-GPU Gemma 4, `@modal.web_server`, Volume caching |
+| SGLang | `very_large_models.py` | 100B+ models, `Cls` + `@modal.experimental.http_server`, dummy-weights iteration |
+| SGLang | `deepseek_v4.py` | DeepSeek V4 Pro on 8×B200, `flashinfer_mxfp4`, EAGLE spec decode, YAML config |
+| SGLang | `sglang_snapshot.py` | GPU memory snapshots with SGLang (single-GPU only) |
+
+All found at `modal-labs/modal-examples/06_gpu_and_ml/llm-serving/`.
 
 ## Modal SDK Basics
 
@@ -149,9 +181,68 @@ ADVANCED_VLLM_ARGS = [
 ]
 ```
 
-## GPU Requirements
+## SGLang Configuration
 
-### Gemma 4 Specifications
+SGLang is the preferred engine for large models (3+ GPUs, FP4/MXFP4 precision). It uses a different Modal pattern than vLLM — `modal.Cls` with lifecycle hooks instead of `@modal.web_server`.
+
+### Basic SGLang Server (Cls Pattern)
+
+```python
+import modal
+import subprocess
+
+app = modal.App("sglang-server")
+
+# SGLang images are typically from lmsysorg/sglang Docker registry
+# Use specific tags for DeepSeek V4: lmsysorg/sglang:deepseek-v4-blackwell
+image = modal.Image.from_registry("lmsysorg/sglang:latest").entrypoint([])
+
+@app.cls(
+    image=image,
+    gpu="H200:4",  # 4×H200 for DS V4 Flash
+    scaledown_window=20 * 60,
+    timeout=30 * 60,
+    volumes={"/root/.cache/huggingface": hf_cache_vol},
+)
+@modal.experimental.http_server(port=8000)
+@modal.concurrent(target_inputs=10)
+class Server:
+    @modal.enter()
+    def start(self):
+        self.proc = _start_sglang_server()
+        wait_for_server_ready()
+
+    @modal.exit()
+    def stop(self):
+        self.proc.terminate()
+        self.proc.wait()
+```
+
+### Key Differences from vLLM
+
+| Aspect | vLLM | SGLang |
+|---|---|---|
+| Modal decorator | `@modal.web_server` | `@modal.experimental.http_server` |
+| Container lifecycle | No explicit lifecycle | `modal.enter` / `modal.exit` methods |
+| URL retrieval | `serve.get_web_url()` | `Server._experimental_get_flash_urls()[0]` |
+| Config format | Command-line flags | YAML file (see `config_deepseek_v4.yaml`) |
+| Dummy weights | Not supported | `APP_USE_DUMMY_WEIGHTS=1` for iteration |
+| Image source | CUDA base + `uv_pip_install("vllm")` | Docker registry (`lmsysorg/sglang:*`) |
+
+### SGLang-Specific vLLM Flags
+
+When running `vllm serve` with SGLang (not the SGLang engine), the vLLM flags still apply. When running SGLang's own engine via `sglang.launch_server`, use these instead:
+
+```bash
+--trust-remote-code           # Required for most non-Transformer models
+--mem-fraction-static 0.82    # Conservative memory allocation
+--moe-runner-backend flashinfer_mxfp4  # Required for DeepSeek V4 MXFP4
+--enable-auto-tool-choice     # Function calling
+--reasoning-parser deepseek-v4 # DeepSeek reasoning extraction
+--tool-call-parser deepseekv4  # DeepSeek tool calls
+```
+
+## GPU Requirements
 
 | Specification | Value | Notes |
 |--------------|-------|-------|

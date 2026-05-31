@@ -69,6 +69,70 @@ Always add new entries at the top. Keep absorbed/outdated entries for history �
 
 ---
 
+## 2026-05-30 — Zero DeepSeek V4 coverage across entire skill
+
+**Status:** `active`
+**Location:** SKILL.md, docs/01-foundation.md, docs/02-deployment-patterns.md, docs/04-cost-management.md, model-lookup/SKILL.md, scripts/estimate_cost.py
+**Drift:** The skill covers Gemma 4 and MiniMax only. DeepSeek V4 Flash and Pro are the most significant open-weight releases of 2026 (93.5% LiveCodeBench, 80.6% SWE Verified) and are not mentioned anywhere — no model entry, no deploy config, no benchmark data, no cost estimate.
+**Correct value:** Add DeepSeek V4 Flash (284B total / 13B active, FP4+FP8, 4×H200 min) and DeepSeek V4 Pro (1.6T total / 49B active, MXFP4, 8×B200 min) across:
+  - SKILL.md target models table
+  - model-lookup/SKILL.md known providers
+  - docs/01-foundation.md GPU requirements + engine decision tree
+  - docs/04-cost-management.md pricing + self-vs-API section
+  - scripts/estimate_cost.py model database
+  - GPU fit table in SKILL.md
+**How to verify:** `grep -r "DeepSeek\|deepseek" . --include="*.md" --include="*.py" | grep -v node_modules | grep -v __pycache__ | wc -l` should be >0 (was 0 before this fix).
+**How to fix when absorbing:** See the 2026-05-30 audit pass — all files updated together.
+
+---
+
+## 2026-05-30 — Skill assumes vLLM only; SGLang is canonical for large models
+
+**Status:** `active`
+**Location:** SKILL.md, docs/01-foundation.md, docs/02-deployment-patterns.md, references/modal-api-notes.md
+**Drift:** The skill describes itself as "using vLLM" and covers only vLLM patterns. Modal's own GitHub has `deepseek_v4.py` (SGLang on Blackwell), `very_large_models.py` (SGLang for 100B+ models), and SGLang is explicitly preferred over vLLM for large models. DeepSeek V4's canonical path is SGLang with `flashinfer_mxfp4`. The skill doesn't mention SGLang as a deployment option.
+**Correct value:** Add SGLang as a parallel track:
+  - SKILL.md: update description to "using vLLM or SGLang", add SGLang dependency
+  - docs/01-foundation.md: add engine decision tree (vLLM for 1-2 GPU small models, SGLang for 3+ GPU large models)
+  - docs/02-deployment-patterns.md: add SGLang `Cls` + `@modal.experimental.http_server` pattern
+  - references/modal-api-notes.md: add SGLang image tags, deepseek_v4.py reference
+**How to verify:** `grep -r "SGLang\|sglang" docs/*.md | wc -l` should show substantive references, not just passing mentions.
+
+---
+
+## 2026-05-30 — Missing "should I self-host?" cost decision framework
+
+**Status:** `active`
+**Location:** docs/04-cost-management.md
+**Drift:** The cost document compares GPU types against each other but never answers the question users actually ask: "is this cheaper than OpenRouter/an API?" It optimizes for cold-start cost, idle-timeout tuning, and batch sizing — all internal efficiency — without acknowledging that for most workloads at 2026 API pricing, self-hosting is 10-600× more expensive per token.
+**Correct value:** Add a "Self-Host vs API" section to `docs/04-cost-management.md` that presents honest break-even math with real API pricing examples (DeepSeek V4 Flash at $0.10/$0.20/M via OpenRouter vs $18.16/hr on 4×H200), describes the specific conditions where self-hosting wins (high concurrency, privacy, fine-tuned models), and provides a decision table.
+**How to verify:** `grep -r "OpenRouter\|API\|self-host\|break-even\|breakeven" docs/04-cost-management.md` should return a substantive section.
+
+---
+
+## 2026-05-30 — GPU memory snapshots incompatible with tensor-parallel multi-GPU
+
+**Status:** `active`
+**Location:** SKILL.md (snapshot deployment shape), docs/02-deployment-patterns.md, docs/07-cold-starts.md
+**Drift:** The skill mentions GPU memory snapshots as a cold-start mitigation but doesn't document that they are incompatible with tensor-parallel multi-GPU setups. Modal's own docs confirm: "Generally incompatible with multi-GPU tensor-parallel setups — our MiniMax example (4×H200) cannot use GPU snapshots today." The snapshot deployment shape in SKILL.md says "single-GPU only" but doesn't explain why.
+**Correct value:** Add explicit warning: GPU memory snapshots use CUDA's cuMem API which doesn't support multi-GPU tensor-parallel memory topologies. Attempting to combine them silently fails or causes undefined behavior. Single-GPU deployments only.
+**How to verify:** `grep -r "tensor-parallel\|multi-GPU\|incompatible" docs/07-cold-starts.md | grep -i snapshot` should find the warning.
+
+---
+
+## 2026-05-30 — Missing Modal GitHub example references
+
+**Status:** `active`
+**Location:** SKILL.md (Key references section), references/modal-api-notes.md
+**Drift:** The skill references `vllm_inference.py` as the canonical Modal example but doesn't mention `very_large_models.py`, `deepseek_v4.py`, or `config_deepseek_v4.yaml` — all found in `modal-labs/modal-examples/06_gpu_and_ml/llm-serving/` during today's research. These cover SGLang patterns, multi-GPU tensor-parallel, and YAML-based config that are essential for large models.
+**Correct value:** Add these to the Key references section in SKILL.md and to references/modal-api-notes.md:
+  - `deepseek_v4.py` — Modal's official DeepSeek V4 Pro deployment (SGLang, 8×B200, MXFP4)
+  - `config_deepseek_v4.yaml` — reference YAML for MoE tuning, EAGLE spec decode, batching
+  - `very_large_models.py` — SGLang pattern for 100B+ models with dummy-weights iteration
+**How to verify:** `grep -r "deepseek_v4\|config_deepseek\|very_large_models" SKILL.md references/` should find all three.
+
+---
+
 ## Template for new entries
 
 ```markdown

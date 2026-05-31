@@ -1,26 +1,30 @@
 ---
 name: modal-llm-inference
-description: Deploy and run OpenAI-compatible LLM inference on Modal.com using vLLM. Covers serverless GPU deployment of open-weight models (Gemma 4 26B-A4B, MiniMax-M2.7) with Volume caching, scaledown tuning, HuggingFace auth, and cost estimation. Use this skill whenever the user mentions deploying an LLM to Modal, self-hosting open-weight models, running vLLM on cloud GPUs, OpenAI-compatible inference servers, H100/H200/A100/B200 GPU provisioning for inference, or questions like "how do I serve Gemma/MiniMax/Qwen/DeepSeek on my own GPU" — even if they don't explicitly name Modal or vLLM.
+description: Deploy and run OpenAI-compatible LLM inference on Modal.com using vLLM or SGLang. Covers serverless GPU deployment of open-weight models (Gemma 4, DeepSeek V4 Flash/Pro, Qwen3-32B, MiniMax-M2.7) with Volume caching, scaledown tuning, HuggingFace auth, and cost estimation. Includes engine-selection guidance (vLLM for 1-2 GPU small models; SGLang for multi-GPU, MXFP4, and large-MoE). Use this skill whenever the user mentions deploying an LLM to Modal, self-hosting open-weight models, running vLLM on cloud GPUs, OpenAI-compatible inference servers, H100/H200/A100/B200 GPU provisioning for inference, or questions like "how do I serve Gemma/MiniMax/Qwen/DeepSeek on my own GPU" — even if they don't explicitly name Modal or vLLM.
 license: MIT
 metadata:
   author: curtismercier
-  version: "0.3.1"
+  version: "0.4.0"
   source-style: authored
   produced-by: skill-forge
   home-repo: curtismercier/skill-forge
   created: 2026-04-16
-  last_reviewed: 2026-04-16
+  last_reviewed: 2026-05-30
   review_interval_days: 90
   dependencies:
     - name: Modal SDK
       url: https://modal.com/docs
     - name: vLLM
       url: https://github.com/vllm-project/vllm
+    - name: SGLang
+      url: https://github.com/sgl-project/sglang
+    - name: HuggingFace Hub
+      url: https://huggingface.co/docs/hub/en/index
 ---
 
 # Modal vLLM LLM Inference
 
-Deploy OpenAI-compatible LLM inference on Modal.com with vLLM. Serverless GPUs, per-second billing, cold starts measured in tens of seconds when weights and JIT artifacts are cached on Modal Volumes.
+Deploy OpenAI-compatible LLM inference on Modal.com with vLLM (small models, 1-2 GPUs) or SGLang (large models, 3+ GPUs, MXFP4). Serverless GPUs, per-second billing, cold starts measured in tens of seconds when weights and JIT artifacts are cached on Modal Volumes.
 
 ## When to use this skill
 
@@ -36,13 +40,13 @@ If the user is asking about closed-source APIs (OpenAI, Anthropic, Google's host
 
 | File | What's in it |
 |---|---|
-| [model-lookup/SKILL.md](model-lookup/SKILL.md) | **Sub-skill.** Discover open-weight LLMs on HuggingFace and check vLLM compatibility *before* writing deployment code. Use when the user asks about a specific model/provider or wants recommendations. |
-| [docs/01-foundation.md](docs/01-foundation.md) | Core concepts: Modal primitives, vLLM basics, Volume caching, architecture |
+| [model-lookup/SKILL.md](model-lookup/SKILL.md) | **Sub-skill.** Discover open-weight LLMs on HuggingFace and check vLLM/SGLang compatibility *before* writing deployment code. Use when the user asks about a specific model/provider or wants recommendations. |
+| [docs/01-foundation.md](docs/01-foundation.md) | Core concepts: Modal primitives, vLLM vs SGLang decision tree, Volume caching, architecture |
 | [docs/02-deployment-patterns.md](docs/02-deployment-patterns.md) | Advanced patterns: scaling, snapshots, multi-GPU, container optimization |
-| [docs/03-client-integration.md](docs/03-client-integration.md) | Python, JS, and terminal client patterns against the vLLM endpoint |
-| [docs/04-cost-management.md](docs/04-cost-management.md) | GPU cost comparison, throughput-vs-latency tradeoffs, budget tuning |
+| [docs/03-client-integration.md](docs/03-client-integration.md) | Python, JS, and terminal client patterns against the vLLM/SGLang endpoint |
+| [docs/04-cost-management.md](docs/04-cost-management.md) | GPU cost comparison, throughput-vs-latency tradeoffs, budget tuning, **self-host vs API comparison** |
 | [docs/05-tui-agent-patterns.md](docs/05-tui-agent-patterns.md) | TUI and agent integration patterns |
-| [references/modal-api-notes.md](references/modal-api-notes.md) | Verified Modal Python API surface: Cls vs Function URLs, experimental HTTP server, secret conventions |
+| [references/modal-api-notes.md](references/modal-api-notes.md) | Verified Modal Python API surface: Cls vs Function URLs, experimental HTTP server, secret conventions, SGLang image tags |
 
 Load the specific doc that matches the user's question. Don't front-load all of them.
 
@@ -55,6 +59,9 @@ Load the specific doc that matches the user's question. Don't front-load all of 
 | Gemma 4 26B-A4B-it | `google/gemma-4-26B-A4B-it` | 26B total / 4B active (MoE), multimodal | Runs on a single H200; Modal's canonical vLLM example. Fastest of the Gemma 4 family. |
 | Gemma 4 31B-it | `google/gemma-4-31B-it` | 30.7B dense, multimodal, 256K ctx | Beats 26B-A4B on every benchmark. Slower (dense, not MoE). Single H200 fits; vLLM + SGLang supported. |
 | MiniMax-M2.7 | `MiniMaxAI/MiniMax-M2.7` | 229B total / 10B active (MoE), FP8 native | "Very large model" — follows Modal's `very_large_models.py` pattern. 4×H200 recommended floor (2×H200 possible with tiny KV cache) |
+| DeepSeek V4 Flash | `deepseek-ai/DeepSeek-V4-Flash` | 284B total / 13B active (MoE), FP4 + FP8 mixed | Near-frontier coding (93.5% LiveCodeBench). **SGLang canonical** with `flashinfer_mxfp4`. 4×H200 min ($18.16/hr). Pre-converted FP8 also available at `sgl-project/DeepSeek-V4-Flash-FP8`. |
+| DeepSeek V4 Pro | `deepseek-ai/DeepSeek-V4-Pro` | 1.6T total / 49B active (MoE), MXFP4 | Open-weight frontier — matches Opus 4.6 on SWE Verified (80.6%). Requires 8×B200 ($50/hr) for MXFP4 path. Modal's `deepseek_v4.py` uses SGLang `flashinfer_mxfp4`. |
+| Qwen3-32B | `Qwen/Qwen3-32B` | 32B dense | Best quality-per-GPU ratio in open weight. Runs on 1×H200 ($4.54/hr). Strong general + coding. vLLM or SGLang both fine. |
 
 If the user wants a different model, the deployment pattern (Image → Volumes → `@modal.web_server` wrapping `vllm serve`) is the same — only the model ID, GPU count, and `--tensor-parallel-size` change.
 
@@ -99,7 +106,7 @@ def serve():
     ]), shell=True)
 ```
 
-**Large models (100B+ params, e.g. MiniMax-M2.7)** follow a different pattern — see `minimax_server.py`. Key differences:
+**Large models (100B+ params, e.g. MiniMax-M2.7, DeepSeek V4 Flash/Pro)** follow a different pattern — see `minimax_server.py`. For DeepSeek V4 specifically, use Modal's `deepseek_v4.py` (SGLang on Blackwell) or SGLang's cookbook (https://docs.sglang.ai/cookbook/autoregressive/DeepSeek/DeepSeek-V4) which has an interactive command generator for Flash on H200 or Pro on B200. Key differences:
 - Weights pre-downloaded at **Image build time** via `image.run_function(download_model, ...)` so the one-time ~230GB download isn't in the cold-start path
 - Uses `modal.Cls` with `@modal.enter`/`@modal.exit` for explicit lifecycle control
 - Uses `modal.experimental.http_server` instead of `modal.web_server` for lower-latency routing
@@ -169,10 +176,12 @@ modal-llm-inference/
 │   └── 05-tui-agent-patterns.md          # TUI/agent patterns
 ├── examples/
 │   ├── basic-deployment/
-│   │   ├── gemma_server.py               # single-GPU H200 deploy (simple pattern)
+│   │   ├── gemma_server.py               # single-GPU H200 deploy (vLLM simple pattern)
 │   │   ├── gemma_snapshot_server.py      # same model, ~10x faster cold starts via snapshots
 │   │   ├── gemma_secured_server.py       # same model, Modal proxy auth enforced
-│   │   ├── minimax_server.py             # multi-GPU tensor-parallel deploy (Cls pattern)
+│   │   ├── minimax_server.py             # multi-GPU tensor-parallel deploy (SGLang Cls pattern)
+│   │   ├── deepseek_v4_flash_server.py   # DS V4 Flash 4×H200 (SGLang, flashinfer_mxfp4)
+│   │   ├── config_deepseek_v4_flash.yaml # companion config for DS V4 Flash
 │   │   ├── test_client.py                # OpenAI client smoke tests (supports proxy auth)
 │   │   └── tool_calling_client.py        # agent loop with real tools (time/weather/calculate)
 │   ├── tui-agent/
@@ -196,6 +205,7 @@ modal-llm-inference/
 ├── configs/
 │   ├── gemma-4-config.yaml               # reference tuning for Gemma 4
 │   ├── minimax-2.7-config.yaml           # reference tuning for MiniMax-M2.7
+│   ├── deepseek-v4-flash-config.yaml     # reference tuning for DS V4 Flash
 │   └── production-config.yaml            # production hardening template
 └── scripts/
     ├── setup_secrets.py                  # helper for HF token secret
@@ -211,14 +221,14 @@ modal-llm-inference/
 
 Verified against Modal's pricing page and the models' VRAM requirements. FP8 row counts weights only — add 20–40% for KV cache.
 
-| GPU | VRAM | Gemma 4 26B-A4B | MiniMax-M2.7 (229B, FP8) |
-|---|---|---|---|
-| B200 | 192 GB | ✅ Overkill, fastest | 2× works comfortably |
-| H200 | 141 GB | ✅ Single GPU, canonical | **4× recommended** (2× tight) |
-| H100 | 80 GB | ⚠️ Tight; FP8/AWQ only | 4-8× for real workloads |
-| A100-80GB | 80 GB | ⚠️ Quantized only | ❌ Don't bother |
-| A100-40GB | 40 GB | ❌ | ❌ |
-| L40S | 48 GB | ❌ | ❌ |
+| GPU | VRAM | Gemma 4 26B (1×) | Qwen3-32B (1×) | DS V4 Flash (4×) | DS V4 Pro (8×) |
+|---|---|---|---|---|---|
+| B200 | 192 GB | ✅ Overkill | ✅ Overkill | 1-2× works | **8× required** (MXFP4) |
+| H200 | 141 GB | **✅ 1×** — canonical | **✅ 1×** — canonical | **✅ 4×** — recommended | ❌ FP4 only, no MXFP4 |
+| H100 | 80 GB | ⚠️ Tight; FP8/AWQ | ⚠️ Tight | ⚠️ 4-8× FP8 only | ❌ |
+| A100-80GB | 80 GB | ⚠️ Quantized only | ⚠️ Quantized | ❌ | ❌ |
+| A100-40GB | 40 GB | ❌ | ❌ | ❌ | ❌ |
+| L40S | 48 GB | ❌ | ❌ | ❌ | ❌ |
 
 For any other model, compute `weights_in_bytes × 1.3` and match to the smallest GPU whose VRAM exceeds that. If it doesn't fit, add GPUs and set `--tensor-parallel-size N`.
 
@@ -239,9 +249,11 @@ This skill provides four runnable examples covering the real distribution of nee
 | Pattern | File | When to use |
 |---|---|---|
 | **Simple** | `gemma_server.py` | Model fits on 1-2 GPUs, iterating on config, don't need optimal cold starts. Modal's canonical `vllm_inference.py` pattern. |
-| **Snapshot** | `gemma_snapshot_server.py` | Same model fit, but you care about cold starts (scale-from-zero traffic). Adds ~10× cold-start reduction via `modal.Cls` + GPU memory snapshots + vLLM sleep mode. Single-GPU only (snapshots are incompatible with tensor-parallel). |
+| **Snapshot** | `gemma_snapshot_server.py` | Same model fit, but you care about cold starts (scale-from-zero traffic). Adds ~10× cold-start reduction via `modal.Cls` + GPU memory snapshots + vLLM sleep mode. **Single-GPU only** — GPU snapshots are incompatible with tensor-parallel multi-GPU (cuMem API vs NCCL topology). |
 | **Secured** | `gemma_secured_server.py` | You want Modal's proxy auth — unauthorized requests rejected by Modal before any container spins up (zero cost for bad traffic). Uses `requires_proxy_auth=True`. See `docs/06-proxy-auth.md`. |
 | **Large** | `minimax_server.py` | 100B+ models with pre-downloaded weights. Cls + `modal.enter`/`modal.exit` + `modal.experimental.http_server`. Modal's `very_large_models.py` pattern. |
+| **DeepSeek V4 Flash** | `deepseek_v4_flash_server.py` | DS V4 Flash (284B, 13B active) on 4×H200. **SGLang** with `flashinfer_mxfp4`. EAGLE spec decode. YAML config. $18.16/hr. |
+| **DeepSeek V4 Pro** | Modal's `deepseek_v4.py` | DS V4 Pro (1.6T, 49B active) on 8×B200. SGLang `flashinfer_mxfp4` (Blackwell required). $50/hr. See modal-labs/modal-examples. |
 
 These are composable — you can combine snapshot + secured, for example, by setting `requires_proxy_auth=True` on the snapshot example's `@modal.web_server` decorator. Don't pick based on "which is newest" — pick based on model size, traffic pattern, and whether the endpoint needs to be public.
 
@@ -374,8 +386,11 @@ vLLM tool-calling reference: https://docs.vllm.ai/en/latest/features/tool_callin
 - **[Modal's `llms.txt`](https://modal.com/llms.txt)** — Modal publishes this specifically for LLM agents. When you lack certainty about anything Modal-related, fetch this first
 - **[Developing with LLMs guide](https://modal.com/docs/guide/developing-with-llms)** — Modal's own rules for agent-written Modal code
 - [Modal vLLM canonical example](https://modal.com/docs/examples/vllm_inference) — the reference implementation the Gemma pattern follows
-- [Modal very-large-models example](https://modal.com/docs/examples/very_large_models) — the pattern the MiniMax server follows
+- [Modal very-large-models example](https://modal.com/docs/examples/very_large_models) — the pattern the MiniMax server follows (SGLang, 100B+ models)
+- [Modal DeepSeek V4 example](https://github.com/modal-labs/modal-examples/blob/main/06_gpu_and_ml/llm-serving/deepseek_v4.py) — Modal's official DS V4 Pro deployment (SGLang, 8×B200, MXFP4)
+- [Modal DeepSeek V4 config](https://github.com/modal-labs/modal-examples/blob/main/06_gpu_and_ml/llm-serving/config_deepseek_v4.yaml) — reference YAML for MoE tuning, EAGLE spec decode, batching
 - [Modal Ministral 3 + memory snapshots](https://modal.com/docs/examples/ministral3_inference) — how to cut cold starts 10× further with GPU memory snapshots
+- [SGLang DeepSeek V4 cookbook](https://docs.sglang.ai/cookbook/autoregressive/DeepSeek/DeepSeek-V4) — interactive config generator for Flash-on-H200 and Pro-on-B200
 - [High-performance LLM inference guide](https://modal.com/docs/guide/high-performance-llm-inference)
 - [Modal pricing](https://modal.com/pricing) — always re-verify before quoting costs
 - [LLM Almanac](https://modal.com/llm-almanac) — Modal's own benchmark data

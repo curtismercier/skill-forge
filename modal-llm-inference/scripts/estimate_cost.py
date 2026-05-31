@@ -120,6 +120,22 @@ MODELS: dict[str, ModelProfile] = {
         throughput_tps=(400, 1400),  # per-replica aggregate, MoE with 10B active
         notes="229B MoE (10B active), FP8. Floor is 4×H200 with tensor parallelism.",
     ),
+    "deepseek-v4-flash": ModelProfile(
+        name="deepseek-v4-flash",
+        hf_repo="deepseek-ai/DeepSeek-V4-Flash",
+        params_billions=284.0, weight_bytes_per_param=0.75,  # FP4+FP8 mixed ~0.75 avg
+        min_gpu={"H200": 4, "H100": 8, "B200": 2},
+        throughput_tps=(500, 1500),  # SGLang flashinfer_mxfp4, 13B active MoE + EAGLE
+        notes="284B MoE (13B active), FP4+FP8. SGLang is canonical (flashinfer_mxfp4). 93.5% LiveCodeBench, 80.6% SWE-Verified. Needs 4×H200. FP8 variant at sgl-project/DeepSeek-V4-Flash-FP8.",
+    ),
+    "deepseek-v4-pro": ModelProfile(
+        name="deepseek-v4-pro",
+        hf_repo="deepseek-ai/DeepSeek-V4-Pro",
+        params_billions=1600.0, weight_bytes_per_param=0.5,  # MXFP4 experts + FP8
+        min_gpu={"B200": 8},  # MXFP4 requires Blackwell
+        throughput_tps=(600, 2000),  # 8×B200, EAGLE, flashinfer_mxfp4, 49B active
+        notes="1.6T MoE (49B active), MXFP4. REQUIRES 8×B200 Blackwell. SGLang only (flashinfer_mxfp4). Matches Opus 4.6 on SWE Verified (80.6%). $50/hr.",
+    ),
     # Add more as they come up; keep numbers honest.
 }
 

@@ -1,6 +1,6 @@
 ---
 name: modal-llm-inference-model-lookup
-description: Discover open-weight LLMs on HuggingFace and assess whether they're deployable on Modal+vLLM before the user commits to a deployment. Surfaces trending/recent releases by provider or keyword, reports weight formats (safetensors vs gguf vs mlx), parameter count, license, and which inference engines can actually run it. Use this skill whenever the user asks about a specific open-source model they haven't deployed yet, says "what's new" or "what should I try" in the LLM space, mentions a provider by name (Prism, MiniMax, Qwen, DeepSeek, Meta, Google, Mistral, Alibaba, 01-AI, Z.ai, etc.), or wants to know whether a model they're eyeing will work with vLLM before writing deployment code.
+description: Discover open-weight LLMs on HuggingFace and assess whether they're deployable on Modal with vLLM or SGLang before the user commits to a deployment. Surfaces trending/recent releases by provider or keyword, reports weight formats (safetensors vs gguf vs mlx), parameter count, license, and which inference engines can actually run it (vLLM vs SGLang vs llama.cpp vs MLX). Use this skill whenever the user asks about a specific open-source model they haven't deployed yet, says "what's new" or "what should I try" in the LLM space, mentions a provider by name (DeepSeek, Qwen, Google, Prism, MiniMax, Meta, Mistral, Z.ai, nvidia, etc.), or wants to know whether a model they're eyeing will work with vLLM or SGLang before writing deployment code.
 ---
 
 # Model Lookup (sub-skill of modal-llm-inference)
@@ -58,7 +58,7 @@ python scripts/find_models.py --author Qwen --vllm-only
 python scripts/find_models.py --inspect prism-ml/Bonsai-8B-gguf
 ```
 
-The script **does not require authentication** for public models. For gated models, set `HF_TOKEN=hf_xxx` in the environment.
+The script **does not require authentication** for public models. For gated models (DeepSeek V4 requires accepting the license on HF), set `HF_TOKEN=hf_xxx` in the environment.
 
 ## Output format
 
@@ -79,7 +79,7 @@ prism-ml/Bonsai-8B-mlx-1bit             0.4B    mlx         mlx (Apple only)    
 
 When reporting results to the user:
 
-1. **Lead with format, not size.** A 70B safetensors model is more useful than an 8B gguf model if the goal is Modal+vLLM. State the engine compatibility prominently.
+1. **Lead with format, not size.** A 70B safetensors model is more useful than an 8B gguf model if the goal is Modal deployment. State both engine and GPU requirements prominently.
 
 2. **Flag format-incompatibility as a warning, not a "here's what's available" list item.** If the user asked "can I run Prism Bonsai on Modal?", the answer is not "yes, here are the variants" — the answer is "Bonsai ships only gguf and mlx; vLLM can't serve these. On Modal you'd need llama.cpp + GGUF or a CPU/MLX workflow. Want me to sketch that instead?"
 
@@ -89,6 +89,10 @@ When reporting results to the user:
 
 5. **Point out when a provider has no deployable-on-vLLM models.** This is genuinely useful information; an empty set is a valid result.
 
+6. **Surface engine choice with the recommendation.** For models under ~70B active params that fit on 1-2 GPUs, vLLM is simpler. For models requiring FP4/MXFP4, multi-GPU tensor-parallel (3+), or needing the SGLang-specific `flashinfer_mxfp4` backend, SGLang is preferred. Mention the engine alongside the model recommendation.
+
+7. **Name the GPU hourly cost.** Don't just say "4 GPUs" — say "4×H200 at $18.16/hr". The cost number changes deployment decisions more than the model name.
+
 ## Known provider → format patterns (as of April 2026)
 
 Snapshot of what each shop usually ships. Verify with the script — these shift.
@@ -96,7 +100,7 @@ Snapshot of what each shop usually ships. Verify with the script — these shift
 - **google** (Gemma family): safetensors, multiple quant variants. vLLM-ready.
 - **MiniMaxAI**: safetensors (FP8 native), needs `--trust-remote-code`. vLLM-ready.
 - **Qwen** (Alibaba): safetensors + GGUF mirrors. vLLM-ready on the main repos.
-- **deepseek-ai**: safetensors. vLLM-ready; huge models often need 8+ GPUs.
+- **deepseek-ai** (DeepSeek V4 Flash / Pro): safetensors, FP4+FP8 mixed precision. **SGLang is the canonical engine** — Modal's official `deepseek_v4.py` uses SGLang's `flashinfer_mxfp4` backend. vLLM 0.22+ also supports V4 via dedicated `deepseek_v4/` package but SGLang is preferred for multi-GPU MXFP4. Flash (284B, 13B active) needs 4×H200 minimum ($18.16/hr). Pro (1.6T, 49B active) requires 8×B200 for MXFP4 ($50/hr).
 - **mistralai**: safetensors. vLLM-ready.
 - **meta-llama**: safetensors. vLLM-ready.
 - **zai-org** (GLM): safetensors + FP8 variants. vLLM and SGLang both supported.
