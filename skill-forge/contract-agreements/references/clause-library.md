@@ -245,7 +245,7 @@ Standard format keeps changes batchable and unambiguous:
 Page URL — what's currently there → what it should say/do
 
 Examples:
-  /about/jay-arzadon — "experience" section lists 3 certifications
+  /about — "experience" section lists 3 certifications
     → update to 5, add 2026 cert
   /contact — form says "we'll respond in 48 hours"
     → change to "24 hours"
