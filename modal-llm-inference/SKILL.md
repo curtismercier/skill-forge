@@ -257,6 +257,20 @@ This skill provides four runnable examples covering the real distribution of nee
 
 These are composable — you can combine snapshot + secured, for example, by setting `requires_proxy_auth=True` on the snapshot example's `@modal.web_server` decorator. Don't pick based on "which is newest" — pick based on model size, traffic pattern, and whether the endpoint needs to be public.
 
+### Upstream Sources
+
+This skill adapts patterns from Modal's canonical examples. When a pattern is directly derived, the upstream URL is noted in the example file header. Key sources:
+
+| Pattern | Upstream | Engine |
+|---|---|---|
+| `gemma_server.py` | [vllm_inference.py](https://github.com/modal-labs/modal-examples/blob/main/06_gpu_and_ml/llm-serving/vllm_inference.py) | vLLM |
+| `minimax_server.py` | [very_large_models.py](https://github.com/modal-labs/modal-examples/blob/main/06_gpu_and_ml/llm-serving/very_large_models.py) | SGLang |
+| `deepseek_v4_flash_server.py` | Modal's [deepseek_v4.py](https://github.com/modal-labs/modal-examples/blob/main/06_gpu_and_ml/llm-serving/deepseek_v4.py) + SGLang [cookbook](https://docs.sglang.ai/cookbook/autoregressive/DeepSeek/DeepSeek-V4) | SGLang |
+| `sglang_snapshot_server.py` (not in this skill) | [sglang_snapshot.py](https://github.com/modal-labs/modal-examples/blob/main/06_gpu_and_ml/llm-serving/sglang_snapshot.py) | SGLang |
+| `sglang_kitchen_sink.py` (not in this skill) | [sglang_kitchen_sink.py](https://github.com/modal-labs/modal-examples/blob/main/06_gpu_and_ml/llm-serving/sglang_kitchen_sink.py) | SGLang |
+
+When upstream examples update their API patterns, the skill's copies should follow. Run `modal deploy` on the upstream example and verify before absorbing changes here.
+
 ## Load testing
 
 `scripts/load_test/` contains a real locust-on-Modal setup adapted from Modal's canonical load test. Point `TARGET_HOST` at your deployed URL:
