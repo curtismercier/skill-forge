@@ -322,3 +322,54 @@ Any dispute arising out of or relating to this Agreement shall be resolved as fo
       dispute to the Ontario Small Claims Court (if within its jurisdiction) or
       to the Ontario Superior Court of Justice.
 ```
+
+---
+
+## Settlement-Specific Clauses
+
+*Added 2026-06-01 — patterns from Arzadon settlement session (s01-44e403).*
+
+### Default reinstatement
+
+**Use when:** Settling a claim for less than its full value. Prevents the settlement from becoming a free option — if the other side signs but doesn't pay, the original claim survives.
+
+```
+If the Agreed Amount is not paid when due, the withdrawal of the demand and
+invoice under Section [Release] is void, [Party]'s original demand of [Date]
+is reinstated, and [Party] reserves all rights to pursue the full value of
+the work performed — approximately $[FULL_AMOUNT] in labour plus infrastructure
+and AI costs — through the appropriate legal process.
+```
+
+**Why it matters:** Without this clause, the other side can sign, get the benefit of the release, and default on payment — leaving you with a breach of contract claim instead of your original (stronger) cause of action. This clause preserves the original claim.
+
+### Release tied to payment, not signing
+
+**Use when:** Payment follows signing (e.g., verification → payment → release). Never give up leverage before receiving consideration.
+
+```
+[Invoice/Claim] is expressly withdrawn upon [Party]'s receipt of the Agreed
+Amount — not upon the Effective Date.
+```
+
+**Why it matters:** Tying the release to the Effective Date means you've given up your demand before receiving a dollar. Tying it to payment means the demand stays alive until money clears. Combined with the default reinstatement clause above, this creates a complete safety net.
+
+### Warranty withdrawn / As-is delivery
+
+**Use when:** A warranty was offered during negotiation but the other side's counterproposal made it unworkable or scope changes made it unreasonable. Preserves the option to negotiate separately.
+
+```
+No Warranty. The [Deliverable] is delivered "as is" and "as available."
+[Party] makes no representations or warranties of any kind, express or
+implied, including but not limited to warranties of merchantability, fitness
+for a particular purpose, or non-infringement, except as expressly set out in
+Section [IP Reps]. [Party] does not warrant that the [Deliverable] will
+operate uninterrupted or error-free.
+
+Warranty by Separate Agreement. If [Other Party] wishes to negotiate
+post-delivery warranty coverage, bug-fix support, or retained access, such
+terms must be set out in a separate written agreement supported by additional
+consideration. No such agreement is created by this document.
+```
+
+**Why it matters:** The "as is" language is standard commercial boilerplate that courts recognize. The separate agreement clause shows reasonableness — you're not refusing warranty, you're requiring it to be negotiated properly with consideration. This defeats any "bad faith withdrawal" argument.

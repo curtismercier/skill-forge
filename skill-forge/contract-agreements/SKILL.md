@@ -4,11 +4,11 @@ description: |
   Draft Ontario/Canadian legal agreements, settlements, IP assignments, and service contracts for developer-to-client arrangements. Use this skill whenever the user mentions contracts, agreements, settlements, terms, legal documents, IP assignment, mutual release, NDA, service agreement, freelance contract, or any kind of legal writing between parties. Covers: settlement agreements, IP assignment, mutual release, service agreements, payment terms, NDAs, and consulting agreements. ALWAYS includes lawyer-review disclaimer. NOT for litigation strategy, court filings, or legal advice — only document drafting.
 metadata:
   author: curtismercier/gravicity
-  version: "1.0.0"
+  version: "1.1.0"
   source-style: authored
   home-repo: curtismercier/skill-forge/skill-forge/contract-agreements
   created: 2026-05-27
-  last_reviewed: 2026-05-28
+  last_reviewed: 2026-06-01
   review_interval_days: 180
 ---
 
@@ -285,3 +285,22 @@ Before pushing skill changes to a public repo:
 - **Don't use US-specific terms** (e.g., "small claims court" should reference Ontario Small Claims Court, "Tort law" should reference Ontario's)
 - **Don't add signature blocks to invoices** — they're billing documents, not agreements
 - **Don't embed bank details in the template** — use [bank details to be provided] in templates; fill when sending
+- **Don't tie a release or demand withdrawal to the signing date** — always tie it to receipt of payment (see clause-library: Release on Payment)
+- **Don't settle for less than full value without a default reinstatement clause** — prevents the settlement from becoming a free option (see clause-library: Default Reinstatement)
+- **Don't let the cover email promise more than the agreement contains** — Section 11.2 (Entire Agreement) wipes email promises; everything must be in the binding document
+- **Don't use "without prejudice" when the facts favor you** — an open letter is fully admissible and signals confidence (see Strategic Considerations below)
+
+## Strategic considerations (added 2026-06-01)
+
+### Open letter vs. without prejudice
+- **Open letter**: Fully admissible in court. Use when the documented facts strongly favor your position. Signals confidence, puts the other side on notice.
+- **Without prejudice**: Protected from admissibility. Use when you're exploring compromise or your position has weaknesses.
+- **Without prejudice except as to costs**: Only usable for costs arguments under Rule 14.07. Middle ground — protects the substance but preserves the costs lever.
+
+### Settlement agreement structural safeguards
+Three clauses that should be standard in any below-value settlement:
+1. **Release on payment** (not signing) — never give up leverage before receiving consideration
+2. **Default reinstatement** — if payment defaults, the original claim survives at full value
+3. **As-is delivery + separate warranty option** — withdraw unworkable warranty terms without appearing unreasonable
+
+All three are templated in `references/clause-library.md`.
