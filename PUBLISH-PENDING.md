@@ -13,6 +13,7 @@ and environment-specific configs must be removed or generalized.
 | **designer-kit** | gravicity | Medium — Gravicity media tree paths, architecture rules | Parameterize brand paths, make scaffold generic |
 | **protocols-authoring** | curtismercier | Medium — references to `gravicity/personal/protocols/` spec tree | Generalize spec root, remove personal examples |
 | **website-master** | — (authored) | Light — audit-improve cycle tied to specific site portfolio | Make audit methodology brand-agnostic |
+| **meta-fable** | sage/gravicity | Medium — LEDGER laws + laws.md provenance carry personal lessons (heightRatio, Somaverse commits); evolution.md §9 references local skill-forge path | Lives at `~/Gravicity/.claude/skills/meta-fable/`. Seed a generic LEDGER for publication; keep delta protocol + gates + tripwires/countersigns intact — they ARE the product |
 
 ## Sanitization checklist (each skill needs)
 
