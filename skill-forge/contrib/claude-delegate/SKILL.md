@@ -12,7 +12,11 @@ metadata:
 
 # claude-delegate — spawn focused Claude sub-agents
 
+> **Living skill — update as delegation patterns evolve.** This skill captures what works today (July 2026). As we discover better patterns, batch strategies, or new CLI flags, update this file. It ships to other Soma instances, Freebuff, and any Claude-powered agent.
+
 This skill teaches any Claude-powered agent how to delegate work to other Claude models via `claude -p`. Instead of doing everything in one session, spawn specialists.
+
+**Harness-agnostic.** Works whether you bill through the Claude subscription (blank `ANTHROPIC_API_KEY`) or the API (set your key). The pattern is the same; only the billing path differs.
 
 ## When to use this
 
